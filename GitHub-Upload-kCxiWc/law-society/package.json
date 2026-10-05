@@ -1,0 +1,1 @@
+{"name":"atc-law-society-local","private":true,"type":"module","scripts":{"start":"python3 server.py"},"dependencies":{"three":"0.180.0"}}
