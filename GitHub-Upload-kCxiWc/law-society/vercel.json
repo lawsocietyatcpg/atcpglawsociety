@@ -4,6 +4,9 @@
   "functions": {
     "api/*.js": { "maxDuration": 60 }
   },
+  "rewrites": [
+    { "source": "/rpc/:action", "destination": "/api/gateway" }
+  ],
   "crons": [
     { "path": "/api/sync-members", "schedule": "0 0 * * *" }
   ]
