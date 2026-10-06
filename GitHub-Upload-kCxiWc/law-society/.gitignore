@@ -3,6 +3,7 @@ data/*
 __pycache__/
 dist/uploads/
 node_modules/
+build/
 .env
 .env.*
 !.env.example

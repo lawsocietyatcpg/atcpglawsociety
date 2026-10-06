@@ -1,0 +1,196 @@
+{
+  "settings": {
+    "color_primary": "#211346",
+    "color_background": "#fbf9f3",
+    "color_accent": "#e9b945",
+    "color_text": "#191331",
+    "moot_preview": true,
+    "site_name": "Law Society",
+    "location": "ATC Penang",
+    "term": "2026/2027",
+    "hero_eyebrow": "A student-led society · ATC Penang",
+    "hero_title": "The law.",
+    "hero_accent": "Our conversation.",
+    "hero_description": "Explore legal issues. Share your perspective.",
+    "topic_label": "Biweekly discussion",
+    "topic_button": "View topic",
+    "event_label": "Upcoming event",
+    "event_button": "View events",
+    "featured_topic": "",
+    "featured_event": "1",
+    "logo": "/assets/logo.png",
+    "logo_3d": true,
+    "about_title": "About us",
+    "committee_title": "Our committee",
+    "about": "A student-led society at ATC Penang. We connect legal study with practice through mooting, discussions and visits.",
+    "events_title": "Events",
+    "events_intro": "Mooting, visits and conversations.",
+    "events_note": "Dates subject to confirmation.",
+    "contact_title": "Contact",
+    "instagram_label": "@lawsocietyatcpg_",
+    "dialogue_title": "Legal discussion",
+    "dialogue_intro": "Read the explainer. Join the conversation.",
+    "principles": [
+      [
+        "LEARN",
+        "Legal issues",
+        "Student research and open discussion."
+      ],
+      [
+        "PRACTISE",
+        "Advocacy",
+        "Build research and mooting skills."
+      ],
+      [
+        "CONNECT",
+        "The profession",
+        "Meet lawyers, alumni and peers."
+      ]
+    ],
+    "email": "lawsocietyatcpg@gmail.com",
+    "instagram": "https://www.instagram.com/lawsocietyatcpg_/",
+    "committee": [
+      [
+        "President",
+        "Ashley Neoh Jia Li"
+      ],
+      [
+        "Vice President",
+        "Ooi Pin Qi"
+      ],
+      [
+        "Secretary",
+        "Yap Jin Hern"
+      ],
+      [
+        "Vice Secretary",
+        "Nur Hanan Zulaikha Binti Abdullah"
+      ],
+      [
+        "Treasurer",
+        "Asha Nair"
+      ],
+      [
+        "Director of PRM",
+        "Celine Liew Xiang Ling"
+      ],
+      [
+        "PRM Committee Member",
+        "Amishaa Gaunder A/P Kumar"
+      ],
+      [
+        "Director of Research",
+        "Melissa Tan Wey"
+      ],
+      [
+        "Research Committee Member",
+        "Chan Jing Fei"
+      ],
+      [
+        "Research Committee Member",
+        "Edward Lim Yi Wei"
+      ]
+    ]
+  },
+  "events": [
+    {
+      "id": "biweekly",
+      "title": "Biweekly Legal Knowledge & Discussion",
+      "date": "2026 / 2027",
+      "category": "Ongoing · Legal knowledge & student discussion",
+      "description": "Read the society’s legal explainers, share your perspective and join our online discussions. Publication and discussion dates follow the biweekly plan, with scheduled holiday and examination breaks.",
+      "status": "ongoing",
+      "registration": "",
+      "photos": [],
+      "documents": []
+    },
+    {
+      "id": "1",
+      "title": "Annual Internal Moot Competition",
+      "date": "Early / Mid-Nov 2026",
+      "category": "Advocacy · On campus",
+      "description": "An opportunity to put legal research and oral advocacy into practice through our annual internal moot competition.",
+      "status": "planned",
+      "registration": "",
+      "photos": []
+    },
+    {
+      "id": "2",
+      "title": "Penang DUN Visit",
+      "date": "Late Nov 2026",
+      "category": "Educational visit",
+      "description": "A proposed visit to the Penang State Legislative Assembly during the State Budget proceedings.",
+      "status": "planned",
+      "registration": "",
+      "photos": []
+    },
+    {
+      "id": "3",
+      "title": "Kuala Lumpur Legal Educational Trip",
+      "date": "Nov / Dec 2026",
+      "category": "3-day educational trip",
+      "description": "Proposed visits to Parliament, the Federal Court / Court of Appeal and a law firm.",
+      "status": "planned",
+      "registration": "",
+      "photos": []
+    },
+    {
+      "id": "4",
+      "title": "Intercollegiate Law Debate / Advocacy Competition",
+      "date": "Jan 2027",
+      "category": "Intercollegiate",
+      "description": "A proposed opportunity to exchange arguments and develop advocacy skills with students from other institutions.",
+      "status": "planned",
+      "registration": "",
+      "photos": []
+    },
+    {
+      "id": "5",
+      "title": "Legal Sharing Session",
+      "date": "Feb 2027",
+      "category": "Practising lawyers & ATC alumni",
+      "description": "Perspectives on legal practice and professional development from practising lawyers and ATC alumni.",
+      "status": "planned",
+      "registration": "",
+      "photos": []
+    },
+    {
+      "id": "6",
+      "title": "Law Quiz",
+      "date": "Aug 2027",
+      "category": "Legal knowledge",
+      "description": "A proposed quiz to bring students together and put their legal knowledge to the test.",
+      "status": "planned",
+      "registration": "",
+      "photos": []
+    },
+    {
+      "id": "7",
+      "title": "Co-curriculum Fair",
+      "date": "Each FIL intake",
+      "category": "Meet the society",
+      "description": "Meet the committee and learn about opportunities to participate in the Law Society.",
+      "status": "planned",
+      "registration": "",
+      "photos": []
+    }
+  ],
+  "topics": [
+    {
+      "id": "1",
+      "title": "Najib’s House Arrest",
+      "summary": "Our first legal knowledge topic of the 2026/2027 term. Read the society’s explainer when it is published, then bring your perspective to the discussion.",
+      "content": "",
+      "publish": "2026-10-09",
+      "discussion": "2026-10-16",
+      "time": "Friday evening · time to be confirmed",
+      "instagram": "",
+      "meet": "",
+      "status": "upcoming"
+    }
+  ],
+  "posts": [],
+  "comments": [],
+  "reactions": [],
+  "reports": []
+}
