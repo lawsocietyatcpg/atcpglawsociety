@@ -1,6 +1,6 @@
 # ATC Penang Law Society — Website handover / 网站交接
 
-Status (7 October 2026): the production code is in the society-owned GitHub repository. The Supabase tables have been created, but the Vercel project, its private connections, Google Sheet sync and public-domain sign-in have **not yet been verified live**. Do not announce member registration until the production checklist passes.
+Status (7 October 2026): the production code is in the society-owned GitHub repository. The Supabase tables have been created. The society-owned member Sheet has been shared with the dedicated sync service account, but its key, Vercel project, private connections, Google Sheet sync and public-domain sign-in have **not yet been verified live**. Do not announce member registration until the production checklist passes.
 
 ## Where everything belongs / 资产归属
 
@@ -11,6 +11,7 @@ Status (7 October 2026): the production code is in the society-owned GitHub repo
 | Database and uploaded files | Supabase organisation `ATC Penang Law Society`, project `vkkrppojhwnpalnepznv` | Shared content, member records, uploaded photos/PDFs, administrator login |
 | Google sign-in | Google Cloud project `atc-penang-law-society` under the society Google account | Member identity |
 | Member register | [Private Google Sheet](https://docs.google.com/spreadsheets/d/1fz3hP77YinkBP4QDOfcVFzVXADpYEnUMR2F0MAznG08/edit) | Full name, intake, email and phone; column E is the internal member ID |
+| Sheet sync identity | Google Cloud service account `law-society-member-sheet-sync@atc-penang-law-society.iam.gserviceaccount.com` | Editor access to the private member Sheet only; no project-wide IAM role |
 
 The website must not rely on a committee member's personal GitHub, Vercel or Google account. The source folder is nested: Vercel **Root Directory** must be `GitHub-Upload-kCxiWc/law-society`.
 
