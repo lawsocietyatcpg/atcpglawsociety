@@ -1,10 +1,12 @@
-# Law Society ATC Penang — local first edition
+# Law Society ATC Penang — website
+
+This README describes the original local preview. The production-ready site is built with `npm run build` and uses the society's Vercel and Supabase accounts; read [HANDOVER.md](HANDOVER.md) before publishing or handing it to the next committee. Running the Python preview does not test live Google sign-in, Google Sheet sync or shared online editing.
 
 Run `python3 server.py` from this directory, then visit http://127.0.0.1:4173.
 
 On this Mac, you can also double-click `Start Website.command` and keep its terminal window open. If the site is already running, use the existing browser preview instead of starting a second copy. Python 3 is required on a new computer.
 
-Product scope and the nontechnical handover requirements are in `PRD.md`. The detailed, editable acceptance and ongoing-update checklist is in `CHECKLIST.md`. Unchecked production items are not completed by this local delivery.
+Product scope is in `PRD.md`. The detailed acceptance checklist is in `CHECKLIST.md`. For society ownership, live connections, everyday admin use and next-committee transfer, read [HANDOVER.md](HANDOVER.md). Production items are not complete until the final-domain checks in that file pass.
 
 No package installation is required. Python 3.9+ provides the local HTTP server and SQLite storage. The interface uses plain HTML, CSS and JavaScript. Fonts use Google Fonts when available, with local fallbacks.
 
