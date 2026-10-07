@@ -62,9 +62,10 @@ export async function syncPendingMembers(service, { onlyUserId = null, limit = 1
   let synced = 0;
   try {
     const token = await accessToken(settings.account);
-    const header = await sheetCall(settings, token, 'GET', 'E1');
+    const header = await sheetCall(settings, token, 'GET', 'E1:F1');
     if (header.values?.[0]?.[0] !== 'Member ID') await sheetCall(settings, token, 'PUT', 'E1', ['Member ID']);
-    const sheet = await sheetCall(settings, token, 'GET', 'A2:E');
+    if (header.values?.[0]?.[1] !== 'Public display name') await sheetCall(settings, token, 'PUT', 'F1', ['Public display name']);
+    const sheet = await sheetCall(settings, token, 'GET', 'A2:F');
     const rows = sheet.values || [];
     let query = service.from('member_sheet_queue')
       .select('user_id,version,synced_version,attempts')
@@ -78,13 +79,13 @@ export async function syncPendingMembers(service, { onlyUserId = null, limit = 1
     for (const queued of pending.data) {
       try {
         const result = await service.from('member_profiles')
-          .select('full_name,intake,email,phone').eq('user_id', queued.user_id).single();
+          .select('full_name,intake,email,phone,display_name').eq('user_id', queued.user_id).single();
         if (result.error) throw new Error('Unable to read a member profile.');
-        const values = [result.data.full_name, result.data.intake, result.data.email, result.data.phone, queued.user_id];
+        const values = [result.data.full_name, result.data.intake, result.data.email, result.data.phone, queued.user_id, result.data.display_name];
         const index = rows.findIndex(row => row[4] === queued.user_id);
-        if (index >= 0) await sheetCall(settings, token, 'PUT', `A${index + 2}:E${index + 2}`, values);
+        if (index >= 0) await sheetCall(settings, token, 'PUT', `A${index + 2}:F${index + 2}`, values);
         else {
-          const appended = await sheetCall(settings, token, 'POST', 'A:E', values, true);
+          const appended = await sheetCall(settings, token, 'POST', 'A:F', values, true);
           const rowNumber = Number(/!A(\d+)/.exec(appended.updates?.updatedRange || '')?.[1]);
           if (rowNumber >= 2) rows[rowNumber - 2] = values;
           else rows.push(values);

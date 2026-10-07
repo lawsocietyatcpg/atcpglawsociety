@@ -15,6 +15,7 @@ export async function initializeMemberAuth() {
   const auth = {
     client,
     profile: null,
+    lastSheetSync: null,
     email: session.data.session?.user?.email || '',
     async token() { return (await client.auth.getSession()).data.session?.access_token || null; },
     async loadProfile() {
@@ -36,6 +37,7 @@ export async function initializeMemberAuth() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Unable to save your details.');
       auth.profile = result.profile;
+      auth.lastSheetSync = result.sheetSync;
       return auth.profile;
     },
     async signIn() {

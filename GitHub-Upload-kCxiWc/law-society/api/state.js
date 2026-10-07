@@ -19,8 +19,14 @@ export default async function handler(req, res) {
         .select('user_id', { count: 'exact', head: true }).eq('pending', true);
       if (pending.error) throw new Error('Unable to read member sync status.');
       state.pending_member_sync_count = pending.count;
+      const authorIds = [...new Set([...state.posts, ...state.comments].map(row => row.user).filter(id => typeof id === 'string' && /^[a-f0-9-]{36}$/i.test(id)))];
+      const profiles = authorIds.length ? await connection.service.from('member_profiles')
+        .select('user_id,full_name,intake,email,phone,display_name').in('user_id', authorIds) : { data: [], error: null };
+      if (profiles.error) throw new Error('Unable to read discussion identities.');
+      state.author_identities = Object.fromEntries(profiles.data.map(profile => [profile.user_id, profile]));
     } else {
       delete state.reports;
+      for (const comment of state.comments) delete comment.user;
     }
     state.user = user?.profileComplete || user?.role === 'admin'
       ? { id: user.id, name: user.name, role: user.role }

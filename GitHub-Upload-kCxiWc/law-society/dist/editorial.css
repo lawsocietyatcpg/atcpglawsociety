@@ -90,6 +90,11 @@ footer { background:transparent; color:var(--muted); }
 .empty h3 { font-size:28px; }
 .side-card { border-top:1px solid var(--line); }
 .composer { background:transparent; border:0; border-top:1px solid var(--line); padding:24px 0; }
+.discussion-ack{display:flex;align-items:flex-start;gap:10px;margin:13px 0;font-size:12px;line-height:1.55;color:var(--muted)}
+.discussion-ack input{width:auto;flex:0 0 auto;margin:3px 0 0}
+.discussion-ack a{text-decoration:underline;text-underline-offset:2px}
+.inline-form{flex-wrap:wrap}
+.inline-form .discussion-ack{flex:0 0 100%;order:-1}
 .preview-notice { background:transparent; border:0; border-left:2px solid var(--gold); padding:4px 0 4px 18px; color:var(--muted); }
 .event-resources { border-top:1px solid var(--line); }
 .event-detail-grid h2 { font-size:40px; }

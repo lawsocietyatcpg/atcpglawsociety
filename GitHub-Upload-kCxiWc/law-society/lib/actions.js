@@ -107,6 +107,7 @@ export function applyAction(state, action, data, user, uploadedUrl) {
     if (collection === 'topics') for (const post of [...state.posts]) if (post.topic === ident) removePost(state, post.id);
     state[collection] = state[collection].filter(row => row.id !== ident);
   } else if (action === 'post') {
+    if (data.ack !== 'on') throw new Error('Please acknowledge the discussion rules before posting.');
     const topic = item(state, 'topics', data.topic);
     if (topic.status !== 'open') throw new Error('This topic is not open for new posts yet, or has been archived.');
     state.posts.push({ id: id(), topic: topic.id, author: user.name, user: user.id, body: required(data.body, 4000), created: now, pinned: false, original: null });
@@ -124,7 +125,8 @@ export function applyAction(state, action, data, user, uploadedUrl) {
       if (previous) removePost(state, previous.id);
       else state.posts.push({ id: id(), topic: post.topic, author: user.name, user: user.id, body: '', created: now, pinned: false, original });
     } else if (action === 'comment') {
-      state.comments.push({ id: id(), post: ident, author: user.name, body: required(data.body, 2000), created: now });
+      if (data.ack !== 'on') throw new Error('Please acknowledge the discussion rules before commenting.');
+      state.comments.push({ id: id(), post: ident, author: user.name, user: user.id, body: required(data.body, 2000), created: now });
     } else if (action === 'report') {
       if (state.reports.some(row => row.post === ident && row.user === user.id && !row.resolved)) throw new Error('You have already reported this post.');
       state.reports.push({ id: id(), post: ident, user: user.id, reason: required(data.reason, 1000), resolved: false });

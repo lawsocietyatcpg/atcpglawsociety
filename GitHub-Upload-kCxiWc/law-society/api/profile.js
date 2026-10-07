@@ -13,13 +13,20 @@ export default async function handler(req, res) {
       ? await profileRequest(config, user, 'GET')
       : await profileRequest(config, user, 'POST', validateProfile(req.body));
     let sheetSync = 'not_applicable';
-    if (req.method === 'POST') {
+    let shouldSync = req.method === 'POST';
+    if (req.method === 'GET' && profile) {
+      const queued = await clients().service.from('member_sheet_queue')
+        .select('pending,next_attempt_at').eq('user_id', user.id).maybeSingle();
+      shouldSync = !queued.error && queued.data?.pending && new Date(queued.data.next_attempt_at) <= new Date();
+    }
+    if (shouldSync) {
       try {
         const result = await syncPendingMembers(clients().service, { onlyUserId: user.id, limit: 1 });
         sheetSync = result.synced > 0 ? 'synced' : 'queued';
-      } catch {
+      } catch (error) {
         // Registration is saved in Supabase and remains in the retry queue.
         sheetSync = 'queued';
+        console.error('Member Sheet sync failed:', error.message);
       }
     }
     return res.status(200).json({ profile, sheetSync });
