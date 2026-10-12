@@ -96,6 +96,7 @@ export function applyAction(state, action, data, user, uploadedUrl) {
     } else {
       for (const key of ['summary', 'content', 'publish', 'discussion', 'time']) row[key] = asText(data[key] || '');
       for (const key of ['instagram', 'meet']) row[key] = link(data[key] || '');
+      row.documents ||= [];
     }
     const statuses = event ? ['planned', 'upcoming', 'ongoing', 'past'] : ['upcoming', 'open', 'archived'];
     if (!statuses.includes(data.status)) throw new Error('Choose a valid status.');
@@ -141,8 +142,9 @@ export function applyAction(state, action, data, user, uploadedUrl) {
     const event = item(state, 'events', ident);
     event.photos = event.photos.filter(path => path !== data.path);
   } else if (action === 'remove-document') {
-    const event = item(state, 'events', ident);
-    event.documents = (event.documents || []).filter(row => row.path !== data.path);
+    if (data.collection && data.collection !== 'topic') throw new Error('Invalid document collection.');
+    const owner = item(state, data.collection === 'topic' ? 'topics' : 'events', ident);
+    owner.documents = (owner.documents || []).filter(row => row.path !== data.path);
   } else if (action === 'photo-details') {
     const event = item(state, 'events', ident);
     if (!event.photos.includes(data.path)) throw new Error('Photograph not found.');
@@ -151,9 +153,10 @@ export function applyAction(state, action, data, user, uploadedUrl) {
     if (data.cover) event.photos = [data.path, ...event.photos.filter(path => path !== data.path)];
   } else if (action === 'attach-upload') {
     if (!uploadedUrl) throw new Error('Upload information is missing.');
+    if (data.collection && (data.collection !== 'topic' || data.target !== 'document')) throw new Error('Invalid upload destination.');
     if (data.target === 'logo') state.settings.logo = uploadedUrl;
     else {
-      const event = item(state, 'events', ident);
+      const event = item(state, data.collection === 'topic' ? 'topics' : 'events', ident);
       if (data.target === 'document') {
         event.documents ||= [];
         event.documents.push({ name: required(data.name || 'Document', 160), path: uploadedUrl });

@@ -42,7 +42,7 @@ export function createCMS(ctx){
     cards[0].querySelector('.eyebrow').textContent=s.topic_label;cards[0].querySelector('.btn').textContent=s.topic_button;
     cards[0].querySelector('h3').textContent=topic?.title||'Legal knowledge & discussion';
     cards[0].querySelector('p').textContent=topic?`Explainer ${friendlyDate(topic.publish)} · Discussion ${friendlyDate(topic.discussion)}`:'New topics will be announced here.';
-    cards[0].querySelector('.btn').href=topic?'#/topic/'+topic.id:'#/dialogue';
+    cards[0].querySelector('.btn').href='#/event/biweekly';
     const topicActions=document.createElement('div');topicActions.className='topic-entry-actions';
     topicActions.append(cards[0].querySelector('.btn'));cards[0].append(topicActions);
     const meeting=topic?.meet;
@@ -69,7 +69,6 @@ export function createCMS(ctx){
   }
   function decorateEventList(){
     const list=document.querySelector('#event-list');if(!list)return;
-    const recurring=list.querySelector('a[href="#/event/biweekly"]');if(recurring)recurring.href='#/dialogue';
     if(!state().settings.moot_preview)return;
     for(const row of list.querySelectorAll('.event-row.planned')){
       if(row.querySelector('h3')?.textContent!=='Annual Internal Moot Competition')continue;
@@ -105,12 +104,26 @@ export function createCMS(ctx){
   }
   function decorateEvent(id){
     const event=state().events.find(e=>e.id===id);if(!event||event.status==='planned')return;
-    if(id==='biweekly')main.querySelector('.prose')?.insertAdjacentHTML('afterend','<a class="btn" href="#/dialogue">Explore legal topics</a>');
+    if(id==='biweekly'){biweeklyLanding();return}
     const documents=event.documents||[];
     if(documents.length)main.querySelector('.gallery')?.insertAdjacentHTML('beforebegin',`<section class="event-resources"><h3>Event resources</h3>${documents.map(d=>`<div class="resource-row"><span>${esc(d.name)}</span><a class="btn outline" href="${esc(d.path)}" download>Download PDF</a></div>`).join('')}</section>`);
     main.querySelector('.gallery')?.classList.add('event-gallery');
     const gallery=main.querySelector('.gallery');
     if(gallery)gallery.innerHTML=event.photos.map((path,i)=>`<figure><button class="photo-open" data-cms="view-photo" data-event="${event.id}" data-index="${i}"><img src="${esc(path)}" alt="${esc(event.photo_captions?.[path]||event.title+' — photograph '+(i+1))}" loading="lazy"></button>${event.photo_captions?.[path]?`<figcaption>${esc(event.photo_captions[path])}</figcaption>`:''}</figure>`).join('');
+  }
+  function biweeklyLanding(){
+    const event=state().events.find(e=>e.id==='biweekly');
+    const upcoming=state().topics.filter(topic=>topic.status!=='archived');
+    const past=state().topics.filter(topic=>topic.status==='archived');
+    const cards=items=>items.map((topic,index)=>`<a class="biweekly-topic" href="#/topic/${encodeURIComponent(topic.id)}"><span class="biweekly-number">${String(index+1).padStart(2,'0')}</span><div><span class="eyebrow">${topic.status==='open'?'Open for discussion':topic.status==='archived'?'Past topic':'Coming up'}</span><h3>${esc(topic.title)}</h3><p>${esc(topic.summary||'Topic details will be added by the society.')}</p><small>${topic.documents?.length?`${topic.documents.length} PDF${topic.documents.length===1?'':'s'} available · `:''}${topic.discussion?`Discussion ${friendlyDate(topic.discussion)}`:'Discussion date to follow'}</small></div><span class="biweekly-arrow" aria-hidden="true">View topic</span></a>`).join('');
+    main.innerHTML=`<div class="wrap page biweekly-page"><div class="breadcrumbs"><a href="#/events">Events</a> / Biweekly legal knowledge</div><span class="eyebrow">A continuing society programme</span><h1 class="page-title">${esc(event?.title||'Biweekly legal knowledge')}</h1><p class="topic-intro">${esc(event?.description||state().settings.dialogue_intro)}</p><section class="biweekly-group"><div class="biweekly-group-head"><h2>Current & upcoming</h2><span>${upcoming.length} topic${upcoming.length===1?'':'s'}</span></div>${cards(upcoming)||'<p class="muted">New topics will appear here.</p>'}</section><section class="biweekly-group"><div class="biweekly-group-head"><h2>Past topics</h2><span>${past.length} topic${past.length===1?'':'s'}</span></div>${cards(past)||'<p class="muted">Completed discussions will be kept here for reference.</p>'}</section></div>`;
+  }
+  function decorateTopic(id){
+    const topic=state().topics.find(t=>t.id===id);if(!topic)return;
+    const crumbs=main.querySelector('.breadcrumbs');
+    if(crumbs)crumbs.innerHTML='<a href="#/events">Events</a> / <a href="#/event/biweekly">Biweekly legal knowledge</a> / Topic';
+    const documents=topic.documents||[];
+    if(documents.length)main.querySelector('.official')?.insertAdjacentHTML('afterend',`<section class="event-resources topic-resources"><h3>Topic PDFs</h3>${documents.map(d=>`<div class="resource-row"><span>${esc(d.name)}</span><a class="btn outline" href="${esc(d.path)}" target="_blank" rel="noopener noreferrer" download>Download PDF</a></div>`).join('')}</section>`);
   }
   function friendlyDate(value){return value?new Date(value+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'TBC'}
   async function openLogin(){
@@ -130,7 +143,7 @@ export function createCMS(ctx){
     if(section==='contact')return `<h2>Contact</h2><p class="muted">Keep the society’s email address and Instagram up to date.</p>${settingsForm(`${input('contact_title','Contact heading',s.contact_title,'textarea')}${input('email','Society email',s.email,'email')}${input('instagram','Instagram link',s.instagram,'url')}${input('instagram_label','Instagram display name',s.instagram_label)}`)}`;
     if(section==='events'||section==='topics'){
       const events=section==='events',kind=events?'event':'topic',items=state()[section];
-      return `<div class="cms-title-row"><div><h2>${events?'Events':'Legal topics'}</h2><p class="muted">${events?'Planned items are grey and non-clickable. Publish details when ready; move finished activities to Past.':'Only administrators create topics. Set a topic to Open when students can start posting.'}</p></div><button class="btn" data-action="edit-${kind}">Add ${kind}</button></div><div class="cms-list">${items.map((item,i)=>`<div class="cms-item"><div><span class="badge">${esc(item.status)}</span><h3>${esc(item.title)}</h3><small>${esc(item.date||item.discussion||'Date to be confirmed')}</small></div><div class="cms-item-buttons"><button class="btn outline" data-action="edit-${kind}" data-id="${item.id}">Edit</button><button class="text-button" data-cms="move" data-collection="${section}" data-id="${item.id}" data-direction="-1" ${i===0?'disabled':''}>Move up</button><button class="text-button" data-cms="move" data-collection="${section}" data-id="${item.id}" data-direction="1" ${i===items.length-1?'disabled':''}>Move down</button><button class="text-button danger" data-action="delete-${kind}" data-id="${item.id}">Delete</button></div></div>`).join('')||'<div class="empty">No items yet. Add your first one above.</div>'}</div><details class="panel"><summary>Edit section headings</summary>${settingsForm(events?`${input('events_title','Events heading',s.events_title,'textarea')}${input('events_intro','Events introduction',s.events_intro,'textarea')}${input('events_note','Schedule note',s.events_note)}`:`${input('dialogue_title','Discussion page heading',s.dialogue_title,'textarea')}${input('dialogue_intro','Discussion introduction',s.dialogue_intro,'textarea')}`)}</details>`;
+      return `<div class="cms-title-row"><div><h2>${events?'Events':'Biweekly topics'}</h2><p class="muted">${events?'Planned items are grey and non-clickable. Publish details when ready; move finished activities to Past.':`${items.length} topic(s) saved. Add each of your 11 topics here. Every topic gets its own page and PDF uploads; move completed topics to Archived.`}</p></div><button class="btn" data-action="edit-${kind}">Add ${kind}</button></div><div class="cms-list">${items.map((item,i)=>`<div class="cms-item"><div><span class="badge">${esc(item.status)}</span><h3>${esc(item.title)}</h3><small>${esc(item.date||item.discussion||'Date to be confirmed')}</small></div><div class="cms-item-buttons"><button class="btn outline" data-action="edit-${kind}" data-id="${item.id}">Edit</button><button class="text-button" data-cms="move" data-collection="${section}" data-id="${item.id}" data-direction="-1" ${i===0?'disabled':''}>Move up</button><button class="text-button" data-cms="move" data-collection="${section}" data-id="${item.id}" data-direction="1" ${i===items.length-1?'disabled':''}>Move down</button><button class="text-button danger" data-action="delete-${kind}" data-id="${item.id}">Delete</button></div></div>`).join('')||'<div class="empty">No items yet. Add your first one above.</div>'}</div><details class="panel"><summary>Edit section headings</summary>${settingsForm(events?`${input('events_title','Events heading',s.events_title,'textarea')}${input('events_intro','Events introduction',s.events_intro,'textarea')}${input('events_note','Schedule note',s.events_note)}`:`${input('dialogue_title','Discussion page heading',s.dialogue_title,'textarea')}${input('dialogue_intro','Discussion introduction',s.dialogue_intro,'textarea')}`)}</details>`;
     }
     if(section==='moderation'){
       const reports=(state().reports||[]).filter(r=>!r.resolved);
@@ -151,13 +164,14 @@ export function createCMS(ctx){
     if(section==='events')main.querySelector('.cms-content').insertAdjacentHTML('beforeend',`<section class="panel"><h3>Moot page preview</h3><p class="small muted">Keep the sample page available until the layout is approved. Turning it off returns the planned Moot event to grey, non-clickable text.</p><form data-cms-form="settings"><label for="preview-toggle">Preview availability</label><select name="moot_preview" id="preview-toggle"><option value="true" ${state().settings.moot_preview?'selected':''}>Show the sample event page</option><option value="false" ${!state().settings.moot_preview?'selected':''}>Hide the sample — planned event only</option></select><button class="btn" style="margin-top:15px">Save preview setting</button><p class="error" role="alert"></p></form></section>`);
   }
   function decorateDialog(){
-    const form=dialog.querySelector('[data-form="save-event"]');if(!form)return;
+    const form=dialog.querySelector('[data-form="save-event"],[data-form="save-topic"]');if(!form)return;
+    const isTopic=form.dataset.form==='save-topic';
     const id=form.querySelector('[name="id"]').value;
-    const event=state().events.find(e=>e.id===id);if(!event)return;
+    const event=state()[isTopic?'topics':'events'].find(e=>e.id===id);if(!event)return;
     const old=dialog.querySelector('.photo-manager');old?.remove();
-    form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="photo-manager">${event.photos.map((path,i)=>`<div><img src="${esc(path)}" alt="Event photograph"><label>Photo caption<input data-caption value="${esc(event.photo_captions?.[path]||'')}" maxlength="300"></label><button type="button" class="text-button" data-cms="photo-details" data-id="${id}" data-path="${esc(path)}">Save caption</button><button type="button" class="text-button" data-cms="photo-details" data-cover="true" data-id="${id}" data-path="${esc(path)}" ${i===0?'disabled':''}>${i===0?'Cover photograph':'Use as cover'}</button><button type="button" class="text-button danger" data-cms="remove-photo" data-id="${id}" data-path="${esc(path)}">Remove photograph</button></div>`).join('')}</div>`);
+    if(!isTopic)form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="photo-manager">${event.photos.map((path,i)=>`<div><img src="${esc(path)}" alt="Event photograph"><label>Photo caption<input data-caption value="${esc(event.photo_captions?.[path]||'')}" maxlength="300"></label><button type="button" class="text-button" data-cms="photo-details" data-id="${id}" data-path="${esc(path)}">Save caption</button><button type="button" class="text-button" data-cms="photo-details" data-cover="true" data-id="${id}" data-path="${esc(path)}" ${i===0?'disabled':''}>${i===0?'Cover photograph':'Use as cover'}</button><button type="button" class="text-button danger" data-cms="remove-photo" data-id="${id}" data-path="${esc(path)}">Remove photograph</button></div>`).join('')}</div>`);
     form.querySelector('.document-manager')?.remove();
-    form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="document-manager"><h3>Downloadable PDFs</h3><p class="small muted">Add the moot problem, competition rules or event documents. Uploads save immediately.</p><label>Document name<input data-document-name placeholder="e.g. Moot problem 2026"></label><label>Add PDF (up to 5 MB)<input type="file" accept="application/pdf" data-cms-upload="document" data-event="${id}"></label>${(event.documents||[]).map(d=>`<div class="admin-item"><a href="${esc(d.path)}" target="_blank" rel="noopener">${esc(d.name)}</a><button type="button" class="text-button danger" data-cms="remove-document" data-id="${id}" data-path="${esc(d.path)}">Remove</button></div>`).join('')}</div>`);
+    form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="document-manager"><h3>Downloadable PDFs</h3><p class="small muted">${isTopic?'Add the research PDF or references for this topic. Each topic has its own files.':'Add the moot problem, competition rules or event documents.'} Uploads save immediately.</p><label>Document name<input data-document-name placeholder="e.g. ${isTopic?'Research notes':'Moot problem 2026'}"></label><label>Add PDF (up to 5 MB)<input type="file" accept="application/pdf" data-cms-upload="document" data-event="${id}" ${isTopic?'data-collection="topic"':''}></label>${(event.documents||[]).map(d=>`<div class="admin-item"><a href="${esc(d.path)}" target="_blank" rel="noopener">${esc(d.name)}</a><button type="button" class="text-button danger" data-cms="remove-document" data-id="${id}" data-path="${esc(d.path)}" ${isTopic?'data-collection="topic"':''}>Remove</button></div>`).join('')}</div>`);
   }
   function warnBefore(callback){if(!dirty)return callback();showDialog('<h2>Unsaved changes</h2><p>Save your edits first, or discard them to continue.</p><div class="dialog-foot"><button class="btn outline" data-action="close">Keep editing</button><button class="btn" data-cms="discard">Discard changes</button></div>');dialog.querySelector('[data-cms="discard"]').onclick=()=>{dirty=false;dialog.close();callback()}}
   function confirmAction(title,body,action,data){showDialog(`<h2>${title}</h2><p>${body}</p><form data-cms-form="${action}"><input type="hidden" name="id" value="${esc(data.id||'')}"><div class="dialog-foot"><button type="button" class="btn outline" data-action="close">Cancel</button><button class="btn" type="submit">Confirm</button></div><p class="error" role="alert"></p></form>`)}
@@ -191,7 +205,7 @@ export function createCMS(ctx){
         const ids=state()[b.dataset.collection].map(x=>x.id),i=ids.indexOf(b.dataset.id),j=i+Number(b.dataset.direction);
         [ids[i],ids[j]]=[ids[j],ids[i]];await api('reorder',{collection:b.dataset.collection,ids});await refresh();toast('Order updated.');
       }else if(action==='remove-photo'||action==='remove-document'){
-        await api(action,{id:b.dataset.id,path:b.dataset.path});await load();decorateDialog();toast('Removed. Recover it under Account & backups if needed.');
+        await api(action,{id:b.dataset.id,path:b.dataset.path,collection:b.dataset.collection});await load();decorateDialog();toast('Removed. Recover it under Account & backups if needed.');
       }else if(action==='photo-details'){
         await api(action,{id:b.dataset.id,path:b.dataset.path,caption:b.parentElement.querySelector('[data-caption]').value,cover:b.dataset.cover==='true'});await load();decorateDialog();toast('Photo details saved.');
       }
@@ -229,11 +243,11 @@ export function createCMS(ctx){
       if(file.size>5_000_000)throw Error('Choose an image under 5 MB.');
       if(control.dataset.cmsUpload==='document'){
         const name=dialog.querySelector('[data-document-name]').value.trim()||file.name;
-        control.disabled=true;await api('upload',{id:control.dataset.event,target:'document',name,image:await readFile(file)});await load();decorateDialog();toast('PDF saved.');return;
+        control.disabled=true;await api('upload',{id:control.dataset.event,target:'document',collection:control.dataset.collection,name,image:await readFile(file)});await load();decorateDialog();toast('PDF saved.');return;
       }
       control.disabled=true;await api('upload',{target:'logo',image:await readFile(file)});await load();decorateShell();toast('Logo saved.');
       const thumb=document.querySelector('.logo-thumb');if(thumb)thumb.src=state().settings.logo;
     }catch(err){toast(err.message)}finally{control.disabled=false}
   });
-  return {decorateShell,decorateHome,decorateEventList,decorateEvent,eventPreview,disposeLogo,renderAdmin,openLogin,decorateDialog};
+  return {decorateShell,decorateHome,decorateEventList,decorateEvent,biweeklyLanding,decorateTopic,eventPreview,disposeLogo,renderAdmin,openLogin,decorateDialog};
 }
