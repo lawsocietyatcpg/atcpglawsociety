@@ -10,6 +10,11 @@ export function createCMS(ctx){
   const select=(key,label,items,value)=>`<div class="cms-field"><label for="cms-${key}">${label}</label><select id="cms-${key}" name="${key}"><option value="">Automatic — first available</option>${items.map(i=>`<option value="${esc(i.id)}" ${value===i.id?'selected':''}>${esc(i.title)}</option>`).join('')}</select></div>`;
   const state=()=>getState();
   const logoSource=source=>source==='/assets/logo.png'?'/assets/silver-medallion.png':source;
+  const mootRegistration='https://docs.google.com/forms/d/e/1FAIpQLScbFcSfUhlCy2wWhGDPyH8JxuVr-b5TdIh9yxXfj5ThoZfSOA/viewform?usp=header';
+  const mootDrive='https://drive.google.com/drive/folders/1O3tXQ2aET9D7asOaNL9dGYDaVdXeXKlm?usp=share_link';
+  const defaultMootSchedule='Preliminary rounds · 23–25 November 2026\nSemi-final · 30 November 2026\nFinal · 4 December 2026';
+  const defaultMootParticipation='Teams of 2–4 members. Use the registration link on this page.';
+  const safeLink=value=>/^https:\/\//i.test(value||'')?value:'';
   const identity=row=>{
     const profile=row.user&&state().author_identities?.[row.user];
     return profile?`<small class="muted">Member: ${esc(profile.full_name)} · ${esc(profile.intake)} · ${esc(profile.email)} · ${esc(profile.phone)}</small>`:
@@ -46,9 +51,6 @@ export function createCMS(ctx){
     cards[0].querySelector('.btn').href='#/event/biweekly';
     const topicActions=document.createElement('div');topicActions.className='topic-entry-actions';
     topicActions.append(cards[0].querySelector('.btn'));cards[0].append(topicActions);
-    const meeting=topic?.meet;
-    const validMeeting=meeting&&/^https:\/\//i.test(meeting);
-    topicActions.insertAdjacentHTML('beforeend',validMeeting?`<a class="meeting-entry" href="${esc(meeting)}" target="_blank" rel="noopener noreferrer">Join Google Meet</a>`:'<span class="meeting-pending">Google Meet · Link coming soon</span>');
     cards[1].querySelector('.eyebrow').textContent=s.event_label;cards[1].querySelector('.btn').textContent=s.event_button;
     cards[1].querySelector('h3').textContent=event?.title||'Our next activity';
     cards[1].querySelector('p').textContent=event?`${event.date} · ${event.status==='planned'?'Planned':event.status==='ongoing'?'Ongoing':'Upcoming'}`:'Details to be announced';
@@ -79,24 +81,33 @@ export function createCMS(ctx){
   }
   function eventPreview(){
     const event=state().events.find(e=>e.id==='1');
+    const s=state().settings;
+    const registration=safeLink(event?.registration||(s.moot_registration??mootRegistration));
+    const drive=safeLink(s.moot_drive??mootDrive);
+    const schedule=s.moot_schedule??defaultMootSchedule;
+    const participation=s.moot_participation??defaultMootParticipation;
+    const documents=event?.documents||[];
+    const problem=documents.find(d=>/moot\s*problem/i.test(d.name));
+    const scheduleFiles=documents.filter(d=>!problem||d.path!==problem.path);
     main.innerHTML=`<div class="event-preview moot-preview">
-      <div class="wrap moot-topline"><a href="#/events">Back to events</a><span class="preview-label">Layout preview</span></div>
+      <div class="wrap moot-topline"><a href="#/events">Back to events</a><span class="preview-label">Competition information</span></div>
       <section class="moot-header"><div class="wrap">
         <div class="eyebrow">ATC Penang · Advocacy</div>
         <h1>${esc(event?.title||'Annual Internal Moot Competition')}</h1>
         <p class="moot-lead">Research the law. Build your argument. Find your voice.</p>
-        <dl class="moot-facts"><div><dt>When</dt><dd>${esc(event?.date||'Early / Mid-Nov 2026')}</dd></div><div><dt>Where</dt><dd>ATC Penang</dd></div><div><dt>Status</dt><dd>Proposed · Details to follow</dd></div></dl>
+        <dl class="moot-facts"><div><dt>When</dt><dd>See schedule below</dd></div><div><dt>Where</dt><dd>ATC Penang · Moot Court</dd></div><div><dt>Registration</dt><dd>${registration?`<a href="${esc(registration)}" target="_blank" rel="noopener noreferrer">Register your team</a>`:'Link to follow'}</dd></div></dl>
       </div></section>
       <div class="wrap moot-body">
-        <p class="moot-disclaimer">Sample layout only. The moot problem and event photos are not yet available.</p>
+        <p class="moot-disclaimer">Competition dates and participation details may be updated by the society. Please check this page for the latest schedule.</p>
         <div class="moot-overview">
-          <section class="moot-about"><div class="eyebrow"><span class="section-no">01</span> The competition</div><h2>Put theory<br>into practice.</h2><p>${esc(event?.description||'Develop legal research and oral advocacy through our annual internal moot competition.')}</p><p class="muted small">The society will confirm the schedule and participation details here.</p></section>
+          <section class="moot-about"><div class="eyebrow"><span class="section-no">01</span> The competition</div><h2>Put theory<br>into practice.</h2><p>${esc(event?.description||'Develop legal research and oral advocacy through our annual internal moot competition.')}</p>${registration?`<a class="btn moot-register" href="${esc(registration)}" target="_blank" rel="noopener noreferrer">Register your team</a>`:''}</section>
           <section class="moot-downloads" aria-labelledby="moot-download-title"><div class="eyebrow"><span class="section-no">02</span> Resources</div><h2 id="moot-download-title">Competition documents</h2>
-            <div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>Moot problem</h3><p>Available when released by the society.</p></div><span class="file-pending">Not released</span></div>
-            <div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>Society proposal</h3><p>Sample download — not the moot problem.</p></div><a href="/assets/sample-proposal.pdf" download="Law-Society-Proposal-example.pdf" class="moot-download-link" aria-label="Download society proposal sample PDF">Download</a></div>
+            <div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>Moot problem</h3><p>${problem?'Official competition problem.':'No release yet.'}</p></div>${problem?`<a href="${esc(problem.path)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">View PDF</a>`:'<span class="file-pending">Not released</span>'}</div>
+            <div class="moot-file"><span class="file-tag drive-tag" aria-hidden="true">DRIVE</span><div><h3>Competition updates & clarifications</h3><p>Find the moot question, clarifications and updated files in the society’s Google Drive.</p></div>${drive?`<a href="${esc(drive)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">Open Drive</a>`:'<span class="file-pending">Link to follow</span>'}</div>
           </section>
         </div>
-        <section class="moot-photos" aria-labelledby="moot-photo-title"><div class="moot-photo-heading"><div><div class="eyebrow"><span class="section-no">03</span> Gallery</div><h2 id="moot-photo-title">From the competition</h2></div><p>Photo positions shown below.<br>Actual photos will follow the event.</p></div>
+        <section class="moot-schedule" aria-labelledby="moot-schedule-title"><div class="eyebrow"><span class="section-no">03</span> On this website</div><h2 id="moot-schedule-title">Schedule & participation</h2><div class="moot-schedule-grid"><div><h3>Competition dates</h3><p>${br(schedule)||'Schedule to be confirmed.'}</p></div><div><h3>Who can take part</h3><p>${br(participation)||'Participation details to follow.'}</p></div></div>${scheduleFiles.length?`<div class="moot-schedule-files"><h3>Further documents</h3>${scheduleFiles.map(d=>`<a href="${esc(d.path)}" target="_blank" rel="noopener noreferrer">${esc(d.name)} · View PDF</a>`).join('')}</div>`:''}</section>
+        <section class="moot-photos" aria-labelledby="moot-photo-title"><div class="moot-photo-heading"><div><div class="eyebrow"><span class="section-no">04</span> Gallery</div><h2 id="moot-photo-title">From the competition</h2></div><p>Actual photos will follow the event.</p></div>
           <div class="moot-photo-grid">${['Group photograph','Oral submissions','Closing moments'].map((name,i)=>`<figure><div class="moot-photo-slot" aria-label="Photo placeholder: ${name}"><svg viewBox="0 0 40 32" fill="none" aria-hidden="true"><rect x="1" y="1" width="38" height="30" rx="1" stroke="currentColor"/><circle cx="28" cy="10" r="3" stroke="currentColor"/><path d="M2 27 13 15l8 8 5-5 12 12" stroke="currentColor"/></svg><span>Photo to come</span></div><figcaption><span>0${i+1}</span>${name}</figcaption></figure>`).join('')}</div>
         </section>
         <div class="moot-end"><a href="#/events">All society events</a><a href="mailto:${esc(state().settings.email)}">Contact the society</a></div>
@@ -117,14 +128,19 @@ export function createCMS(ctx){
     const upcoming=state().topics.filter(topic=>topic.status!=='archived');
     const past=state().topics.filter(topic=>topic.status==='archived');
     const cards=items=>items.map((topic,index)=>`<a class="biweekly-topic" href="#/topic/${encodeURIComponent(topic.id)}"><span class="biweekly-number">${String(index+1).padStart(2,'0')}</span><div><span class="eyebrow">${topic.status==='open'?'Open for discussion':topic.status==='archived'?'Past topic':'Coming up'}</span><h3>${esc(topic.title)}</h3><p>${esc(topic.summary||'Topic details will be added by the society.')}</p><small>${topic.documents?.length?`${topic.documents.length} PDF${topic.documents.length===1?'':'s'} available · `:''}${topic.discussion?`Discussion ${friendlyDate(topic.discussion)}`:'Discussion date to follow'}</small></div><span class="biweekly-arrow" aria-hidden="true">View topic</span></a>`).join('');
-    main.innerHTML=`<div class="wrap page biweekly-page"><div class="breadcrumbs"><a href="#/events">Events</a> / Biweekly legal knowledge</div><span class="eyebrow">A continuing society programme</span><h1 class="page-title">${esc(event?.title||'Biweekly legal knowledge')}</h1><p class="topic-intro">${esc(event?.description||state().settings.dialogue_intro)}</p><section class="biweekly-group"><div class="biweekly-group-head"><h2>Current & upcoming</h2><span>${upcoming.length} topic${upcoming.length===1?'':'s'}</span></div>${cards(upcoming)||'<p class="muted">New topics will appear here.</p>'}</section><section class="biweekly-group"><div class="biweekly-group-head"><h2>Past topics</h2><span>${past.length} topic${past.length===1?'':'s'}</span></div>${cards(past)||'<p class="muted">Completed discussions will be kept here for reference.</p>'}</section></div>`;
+    main.innerHTML=`<div class="wrap page biweekly-page"><div class="breadcrumbs"><a href="#/events">Events</a> / Biweekly legal knowledge</div><span class="eyebrow">A continuing society programme</span><h1 class="page-title">${esc(event?.title||'Biweekly legal knowledge')}</h1><p class="topic-intro">${esc(event?.description||state().settings.dialogue_intro)}</p><p class="small muted">Read the topic materials and discuss directly on this website. There is no separate online meeting.</p><section class="biweekly-group"><div class="biweekly-group-head"><h2>Current & upcoming</h2><span>${upcoming.length} topic${upcoming.length===1?'':'s'}</span></div>${cards(upcoming)||'<p class="muted">New topics will appear here.</p>'}</section><section class="biweekly-group"><div class="biweekly-group-head"><h2>Past topics</h2><span>${past.length} topic${past.length===1?'':'s'}</span></div>${cards(past)||'<p class="muted">Completed discussions will be kept here for reference.</p>'}</section></div>`;
   }
   function decorateTopic(id){
     const topic=state().topics.find(t=>t.id===id);if(!topic)return;
     const crumbs=main.querySelector('.breadcrumbs');
     if(crumbs)crumbs.innerHTML='<a href="#/events">Events</a> / <a href="#/event/biweekly">Biweekly legal knowledge</a> / Topic';
     const documents=topic.documents||[];
-    if(documents.length)main.querySelector('.official')?.insertAdjacentHTML('afterend',`<section class="event-resources topic-resources"><h3>Topic PDFs</h3>${documents.map(d=>`<div class="resource-row"><span>${esc(d.name)}</span><a class="btn outline" href="${esc(d.path)}" target="_blank" rel="noopener noreferrer" download>Download PDF</a></div>`).join('')}</section>`);
+    if(documents.length)main.querySelector('.official')?.insertAdjacentHTML('beforebegin',`<section class="event-resources topic-resources" aria-label="Topic PDF materials"><span class="eyebrow">Start here</span><h2>Topic PDFs</h2><p>Read the society’s materials before joining the discussion.</p>${documents.map(d=>`<div class="resource-row"><strong>${esc(d.name)}</strong><a class="btn" href="${esc(d.path)}" target="_blank" rel="noopener noreferrer" aria-label="View ${esc(d.name)} PDF">View PDF</a></div>`).join('')}</section>`);
+    const official=main.querySelector('.official');
+    const instagram=official?.querySelector('a');
+    if(instagram){instagram.className='topic-instagram-link';instagram.textContent='Read the Instagram post';}
+    const meeting=main.querySelector('.discussion-layout aside .side-card');
+    meeting?.remove();
   }
   function friendlyDate(value){return value?new Date(value+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'TBC'}
   async function openLogin(){
@@ -154,6 +170,7 @@ export function createCMS(ctx){
   }
   function renderAdmin(){
     dirty=false;
+    const s=state().settings;
     if(state().user?.role!=='admin'){
       main.innerHTML=`<div class="wrap page admin-welcome"><div class="eyebrow">Society workspace</div><h1 class="page-title">Website admin</h1><p class="topic-intro">Edit content, events and committee details. No coding needed.</p><button class="btn" data-cms="admin-login">${state().admin_configured?'Administrator sign in':'Set up administrator account'}</button><p class="small muted" style="margin-top:18px">${state().admin_configured?'Sign in with your administrator username and password.':'Create your own username and password once, then use them for future sign-ins.'}</p></div>`;return;
     }
@@ -164,17 +181,18 @@ export function createCMS(ctx){
       const form=main.querySelector('[data-cms-form="settings"] .form-grid');
       form.insertAdjacentHTML('beforeend',`<div class="full"><h3>Brand colours</h3><p class="small muted">Coordinate these with the Media team. Use dark text on a light background so the website stays readable.</p><div class="form-grid">${[['color_primary','Primary / buttons'],['color_background','Page background'],['color_accent','Gold / accent'],['color_text','Text colour']].map(([k,l])=>input(k,l,state().settings[k],'color')).join('')}</div></div>`);
     }
-    if(section==='events')main.querySelector('.cms-content').insertAdjacentHTML('beforeend',`<section class="panel"><h3>Moot page preview</h3><p class="small muted">Keep the sample page available until the layout is approved. Turning it off returns the planned Moot event to grey, non-clickable text.</p><form data-cms-form="settings"><label for="preview-toggle">Preview availability</label><select name="moot_preview" id="preview-toggle"><option value="true" ${state().settings.moot_preview?'selected':''}>Show the sample event page</option><option value="false" ${!state().settings.moot_preview?'selected':''}>Hide the sample — planned event only</option></select><button class="btn" style="margin-top:15px">Save preview setting</button><p class="error" role="alert"></p></form></section>`);
+    if(section==='events')main.querySelector('.cms-content').insertAdjacentHTML('beforeend',`<section class="panel"><h3>Annual Moot Competition page</h3><p class="small muted">Update the registration form, Drive folder, schedule and participation details here. Changes go live after saving. Upload the moot problem or schedule PDFs through Edit on the event above.</p>${settingsForm(`${input('moot_registration','Registration form (responder link)',s.moot_registration??mootRegistration,'url')}${input('moot_drive','Google Drive updates folder',s.moot_drive??mootDrive,'url')}<div class="full">${input('moot_schedule','Competition dates / schedule',s.moot_schedule??defaultMootSchedule,'textarea')}</div><div class="full">${input('moot_participation','Participation details',s.moot_participation??defaultMootParticipation,'textarea')}</div>`)}</section><section class="panel"><h3>Moot page visibility</h3><p class="small muted">Turning this off returns the planned Moot event to grey, non-clickable text.</p><form data-cms-form="settings"><label for="preview-toggle">Page availability</label><select name="moot_preview" id="preview-toggle"><option value="true" ${s.moot_preview?'selected':''}>Show the event page</option><option value="false" ${!s.moot_preview?'selected':''}>Hide the page — planned event only</option></select><button class="btn" style="margin-top:15px">Save visibility</button><p class="error" role="alert"></p></form></section>`);
   }
   function decorateDialog(){
     const form=dialog.querySelector('[data-form="save-event"],[data-form="save-topic"]');if(!form)return;
     const isTopic=form.dataset.form==='save-topic';
+    if(isTopic){const meet=form.querySelector('#f-meet');meet?.previousElementSibling?.remove();meet?.remove();const time=form.querySelector('label[for="f-time"]');if(time)time.textContent='Discussion opens (Malaysia time)';}
     const id=form.querySelector('[name="id"]').value;
     const event=state()[isTopic?'topics':'events'].find(e=>e.id===id);if(!event)return;
     const old=dialog.querySelector('.photo-manager');old?.remove();
     if(!isTopic)form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="photo-manager">${event.photos.map((path,i)=>`<div><img src="${esc(path)}" alt="Event photograph"><label>Photo caption<input data-caption value="${esc(event.photo_captions?.[path]||'')}" maxlength="300"></label><button type="button" class="text-button" data-cms="photo-details" data-id="${id}" data-path="${esc(path)}">Save caption</button><button type="button" class="text-button" data-cms="photo-details" data-cover="true" data-id="${id}" data-path="${esc(path)}" ${i===0?'disabled':''}>${i===0?'Cover photograph':'Use as cover'}</button><button type="button" class="text-button danger" data-cms="remove-photo" data-id="${id}" data-path="${esc(path)}">Remove photograph</button></div>`).join('')}</div>`);
     form.querySelector('.document-manager')?.remove();
-    form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="document-manager"><h3>Downloadable PDFs</h3><p class="small muted">${isTopic?'Add the research PDF or references for this topic. Each topic has its own files.':'Add the moot problem, competition rules or event documents.'} Uploads save immediately.</p><label>Document name<input data-document-name placeholder="e.g. ${isTopic?'Research notes':'Moot problem 2026'}"></label><label>Add PDF (up to 5 MB)<input type="file" accept="application/pdf" data-cms-upload="document" data-event="${id}" ${isTopic?'data-collection="topic"':''}></label>${(event.documents||[]).map(d=>`<div class="admin-item"><a href="${esc(d.path)}" target="_blank" rel="noopener">${esc(d.name)}</a><button type="button" class="text-button danger" data-cms="remove-document" data-id="${id}" data-path="${esc(d.path)}" ${isTopic?'data-collection="topic"':''}>Remove</button></div>`).join('')}</div>`);
+    form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="document-manager"><h3>PDFs for website viewing</h3><p class="small muted">${isTopic?'Add the research PDF or references for this topic. Each topic has its own files.':'Add the moot problem, schedule or competition documents.'} Visitors see View PDF, not a download button. A public PDF can still be saved using browser tools. Uploads save immediately.</p><label>Document name<input data-document-name placeholder="e.g. ${isTopic?'Research notes':'Moot problem 2026'}"></label><label>Add PDF (up to 5 MB)<input type="file" accept="application/pdf" data-cms-upload="document" data-event="${id}" ${isTopic?'data-collection="topic"':''}></label>${(event.documents||[]).map(d=>`<div class="admin-item"><a href="${esc(d.path)}" target="_blank" rel="noopener">${esc(d.name)}</a><button type="button" class="text-button danger" data-cms="remove-document" data-id="${id}" data-path="${esc(d.path)}" ${isTopic?'data-collection="topic"':''}>Remove</button></div>`).join('')}</div>`);
   }
   function warnBefore(callback){if(!dirty)return callback();showDialog('<h2>Unsaved changes</h2><p>Save your edits first, or discard them to continue.</p><div class="dialog-foot"><button class="btn outline" data-action="close">Keep editing</button><button class="btn" data-cms="discard">Discard changes</button></div>');dialog.querySelector('[data-cms="discard"]').onclick=()=>{dirty=false;dialog.close();callback()}}
   function confirmAction(title,body,action,data){showDialog(`<h2>${title}</h2><p>${body}</p><form data-cms-form="${action}"><input type="hidden" name="id" value="${esc(data.id||'')}"><div class="dialog-foot"><button type="button" class="btn outline" data-action="close">Cancel</button><button class="btn" type="submit">Confirm</button></div><p class="error" role="alert"></p></form>`)}

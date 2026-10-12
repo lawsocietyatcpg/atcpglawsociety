@@ -97,7 +97,15 @@ footer { background:transparent; color:var(--muted); }
 .biweekly-topic p{color:var(--muted);font-size:14px;margin:0 0 8px;max-width:670px}
 .biweekly-topic small,.biweekly-number{color:var(--muted);font-size:12px}
 .biweekly-arrow{font-size:12px;color:var(--purple);padding-top:14px}
-.topic-resources{margin:32px 0 42px}
+.topic-resources{margin:34px 0 36px;padding:24px 25px;background:var(--surface-soft);border-top:2px solid var(--purple)}
+.topic-resources h2{font-size:clamp(30px,3.7vw,42px);margin:10px 0 7px}
+.topic-resources>p{font-size:13px;color:var(--muted);margin:0 0 18px}
+.topic-resources .resource-row{padding:16px 0}
+.topic-resources .resource-row strong{font-size:14px;font-weight:500}
+.topic-resources .resource-row .btn{white-space:nowrap}
+.topic-instagram-link{display:inline-block;margin-top:18px;color:var(--muted);font-size:12px;text-decoration:underline;text-underline-offset:4px}
+.topic-instagram-link:hover{color:var(--purple)}
+@media(max-width:640px){.topic-resources{padding:20px 16px}.topic-resources .resource-row{gap:10px}}
 @media(max-width:640px){.biweekly-topic{grid-template-columns:30px minmax(0,1fr);gap:13px}.biweekly-arrow{grid-column:2;padding:0}.biweekly-page>.topic-intro{margin-bottom:36px}.biweekly-group{margin-top:40px}}
 .official { background:transparent; border-left:2px solid var(--gold); padding:4px 0 4px 22px; margin:30px 0; }
 .official h3 { font-size:27px; }

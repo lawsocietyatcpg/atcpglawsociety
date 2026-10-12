@@ -9,6 +9,10 @@ import time
 DEFAULTS = {
     'color_primary': '#211346', 'color_background': '#fbf9f3', 'color_accent': '#e9b945', 'color_text': '#191331',
     'moot_preview': True,
+    'moot_registration': 'https://docs.google.com/forms/d/e/1FAIpQLScbFcSfUhlCy2wWhGDPyH8JxuVr-b5TdIh9yxXfj5ThoZfSOA/viewform?usp=header',
+    'moot_drive': 'https://drive.google.com/drive/folders/1O3tXQ2aET9D7asOaNL9dGYDaVdXeXKlm?usp=share_link',
+    'moot_schedule': 'Preliminary rounds · 23–25 November 2026\nSemi-final · 30 November 2026\nFinal · 4 December 2026',
+    'moot_participation': 'Teams of 2–4 members. Use the registration link on this page.',
     'site_name': 'Law Society', 'location': 'ATC Penang', 'term': '2026/2027',
     'hero_eyebrow': 'A student-led society · ATC Penang',
     'hero_title': 'The law.', 'hero_accent': 'Our conversation.',
@@ -104,6 +108,9 @@ def validate_settings(settings):
         raise ValueError('Enter a valid email address.')
     if 'instagram' in settings and settings['instagram'] and not settings['instagram'].startswith('https://'):
         raise ValueError('The Instagram link must use https://.')
+    for key in ['moot_registration', 'moot_drive']:
+        if key in settings and settings[key] and not settings[key].startswith('https://'):
+            raise ValueError('Links must start with https://.')
     if 'logo' in settings and not valid_asset(settings['logo']):
         raise ValueError('Choose a logo uploaded through the media library.')
 

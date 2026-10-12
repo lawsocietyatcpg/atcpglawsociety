@@ -59,6 +59,8 @@ function validateSettings(settings) {
   }
   if (settings.email && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(settings.email)) throw new Error('Enter a valid email address.');
   if (settings.instagram) link(settings.instagram);
+  if (settings.moot_registration) link(settings.moot_registration);
+  if (settings.moot_drive) link(settings.moot_drive);
   if (settings.logo && settings.logo !== '/assets/logo.png' && !/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/society-public\/[a-f0-9]{32}\.(png|jpg|webp)$/.test(settings.logo)) throw new Error('Choose a logo uploaded through the media library.');
 }
 
