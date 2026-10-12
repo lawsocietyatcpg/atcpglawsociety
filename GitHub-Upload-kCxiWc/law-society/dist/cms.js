@@ -9,6 +9,7 @@ export function createCMS(ctx){
   const settingsForm=(body)=>`<form data-cms-form="settings"><div class="form-grid">${body}</div><div class="save-bar"><span data-save-status>Changes appear on the website after saving.</span><button class="btn" type="submit">Save changes</button></div><p class="error" role="alert"></p></form>`;
   const select=(key,label,items,value)=>`<div class="cms-field"><label for="cms-${key}">${label}</label><select id="cms-${key}" name="${key}"><option value="">Automatic — first available</option>${items.map(i=>`<option value="${esc(i.id)}" ${value===i.id?'selected':''}>${esc(i.title)}</option>`).join('')}</select></div>`;
   const state=()=>getState();
+  const logoSource=source=>source==='/assets/logo.png'?'/assets/silver-medallion.png':source;
   const identity=row=>{
     const profile=row.user&&state().author_identities?.[row.user];
     return profile?`<small class="muted">Member: ${esc(profile.full_name)} · ${esc(profile.intake)} · ${esc(profile.email)} · ${esc(profile.phone)}</small>`:
@@ -19,10 +20,10 @@ export function createCMS(ctx){
     const s=state().settings;
     for(const [key,variable] of [['color_primary','--purple'],['color_background','--paper'],['color_accent','--gold'],['color_text','--ink']])document.documentElement.style.setProperty(variable,s[key]);
     const brand=document.querySelector('.brand');
-    brand.querySelector('img').src=s.logo;brand.querySelector('strong').textContent=s.site_name;
+    brand.querySelector('img').src=logoSource(s.logo);brand.querySelector('strong').textContent=s.site_name;
     brand.querySelector('span').textContent=`${s.location} · ${s.term}`;
     document.title=`${s.site_name} · ${s.location}`;
-    document.querySelector('link[rel="icon"]').href=s.logo;
+    document.querySelector('link[rel="icon"]').href=logoSource(s.logo);
     document.querySelector('.links').insertAdjacentHTML('beforeend','<button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour mode"><span class="theme-symbol" aria-hidden="true">☾</span><span class="theme-label">Dark</span></button>');
     document.dispatchEvent(new Event('theme-controls-ready'));
     document.querySelector('.footer-inner').innerHTML=`<div><span>© ${new Date().getFullYear()} ${esc(s.site_name)} ${esc(s.location)}</span><small class="creator-credit">Website created by Ooi Pin Qi · Vice President, 2026/2027.<br>Original website design & development attribution. Please retain this credit.</small></div><span>${esc(s.term)} Committee</span><a href="#/admin">Admin</a>`;
@@ -34,8 +35,8 @@ export function createCMS(ctx){
     document.querySelector('.hero h1').innerHTML=`${br(s.hero_title)}<br><em>${br(s.hero_accent)}</em>`;
     document.querySelector('.hero-copy').textContent=s.hero_description;
     const art=document.querySelector('.hero-art');
-    art.innerHTML=s.logo_3d?`<div class="logo-scene"><div class="eyebrow">Drag to inspect</div><div class="logo-canvas"></div><div class="logo-controls"><button data-logo-pause type="button">Pause rotation</button><button data-logo-reset type="button">Reset view</button></div><span class="edition">${esc(s.term)} · THE SOCIETY EMBLEM</span></div>`:`<img src="${esc(s.logo)}" alt="${esc(s.site_name)} emblem">`;
-    if(s.logo_3d)dispose=mountLogo(art.querySelector('.logo-canvas'),s.logo);
+    art.innerHTML=s.logo_3d?`<div class="logo-scene"><div class="eyebrow">Drag to inspect</div><div class="logo-canvas"></div><div class="logo-controls"><button data-logo-pause type="button">Pause rotation</button><button data-logo-reset type="button">Reset view</button></div><span class="edition">${esc(s.term)} · THE SOCIETY EMBLEM</span></div>`:`<img src="${esc(logoSource(s.logo))}" alt="${esc(s.site_name)} emblem">`;
+    if(s.logo_3d)dispose=mountLogo(art.querySelector('.logo-canvas'),logoSource(s.logo));
     const topic=state().topics.find(t=>t.id===s.featured_topic)||state().topics.find(t=>t.status!=='archived');
     const event=state().events.find(e=>e.id===(s.featured_event||'1')&&e.status!=='past')||state().events.find(e=>e.status!=='past');
     const cards=document.querySelectorAll('.hero-feature');
@@ -158,6 +159,8 @@ export function createCMS(ctx){
     }
     main.innerHTML=`<div class="wrap page cms"><div class="cms-top"><div><div class="eyebrow">Society workspace</div><h1>Make it yours.</h1></div><a class="btn outline" href="#/">View website</a></div><div class="cms-layout"><nav class="cms-nav" aria-label="Administration">${Object.entries(titles).filter(([id])=>id!=='members'||getMemberAuth()).map(([id,label])=>`<button data-cms="section" data-section="${id}" class="${id===section?'active':''}" ${id===section?'aria-current="page"':''}>${label}</button>`).join('')}<button data-cms="signout">Sign out</button><small>Signed in as<br><strong>${esc(state().user.name)}</strong><br>${getMemberAuth()?'Changes go live when saved':'Local preview'}</small></nav><div class="cms-content">${adminBody()}</div></div></div>`;
     if(section==='home'){
+      const thumb=main.querySelector('.logo-thumb');if(thumb)thumb.src=logoSource(state().settings.logo);
+      const logoHint=main.querySelector('#cms-logo-file+small');if(logoHint)logoHint.textContent='Use a transparent square PNG for the rotating coin. Uploads save immediately. Up to 5 MB.';
       const form=main.querySelector('[data-cms-form="settings"] .form-grid');
       form.insertAdjacentHTML('beforeend',`<div class="full"><h3>Brand colours</h3><p class="small muted">Coordinate these with the Media team. Use dark text on a light background so the website stays readable.</p><div class="form-grid">${[['color_primary','Primary / buttons'],['color_background','Page background'],['color_accent','Gold / accent'],['color_text','Text colour']].map(([k,l])=>input(k,l,state().settings[k],'color')).join('')}</div></div>`);
     }
@@ -246,7 +249,7 @@ export function createCMS(ctx){
         control.disabled=true;await api('upload',{id:control.dataset.event,target:'document',collection:control.dataset.collection,name,image:await readFile(file)});await load();decorateDialog();toast('PDF saved.');return;
       }
       control.disabled=true;await api('upload',{target:'logo',image:await readFile(file)});await load();decorateShell();toast('Logo saved.');
-      const thumb=document.querySelector('.logo-thumb');if(thumb)thumb.src=state().settings.logo;
+      const thumb=document.querySelector('.logo-thumb');if(thumb)thumb.src=logoSource(state().settings.logo);
     }catch(err){toast(err.message)}finally{control.disabled=false}
   });
   return {decorateShell,decorateHome,decorateEventList,decorateEvent,biweeklyLanding,decorateTopic,eventPreview,disposeLogo,renderAdmin,openLogin,decorateDialog};
