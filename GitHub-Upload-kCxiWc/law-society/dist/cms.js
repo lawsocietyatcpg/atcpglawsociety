@@ -28,7 +28,6 @@ export function createCMS(ctx){
     brand.querySelector('img').src=logoSource(s.logo);brand.querySelector('strong').textContent=s.site_name;
     brand.querySelector('span').textContent=`${s.location} · ${s.term}`;
     document.title=`${s.site_name} · ${s.location}`;
-    document.querySelector('link[rel="icon"]').href=logoSource(s.logo);
     document.querySelector('.links').insertAdjacentHTML('beforeend','<button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch colour mode"><span class="theme-symbol" aria-hidden="true">☾</span><span class="theme-label">Dark</span></button>');
     document.dispatchEvent(new Event('theme-controls-ready'));
     document.querySelector('.footer-inner').innerHTML=`<div><span>© ${new Date().getFullYear()} ${esc(s.site_name)} ${esc(s.location)}</span><small class="creator-credit">Website created by Ooi Pin Qi · Vice President, 2026/2027.<br>Original website design & development attribution. Please retain this credit.</small></div><span>${esc(s.term)} Committee</span><a href="#/admin">Admin</a>`;
