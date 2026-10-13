@@ -5,6 +5,7 @@
     "color_accent": "#e9b945",
     "color_text": "#191331",
     "moot_preview": true,
+    "moot_public": false,
     "moot_registration": "https://docs.google.com/forms/d/e/1FAIpQLScbFcSfUhlCy2wWhGDPyH8JxuVr-b5TdIh9yxXfj5ThoZfSOA/viewform?usp=header",
     "moot_drive": "https://drive.google.com/drive/folders/1O3tXQ2aET9D7asOaNL9dGYDaVdXeXKlm?usp=share_link",
     "moot_schedule": "Preliminary rounds · 23–25 November 2026\nSemi-final · 30 November 2026\nFinal · 4 December 2026",

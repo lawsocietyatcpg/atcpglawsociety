@@ -71,7 +71,7 @@ export function createCMS(ctx){
   }
   function decorateEventList(){
     const list=document.querySelector('#event-list');if(!list)return;
-    if(!state().settings.moot_preview)return;
+    if(state().settings.moot_public!==true)return;
     for(const row of list.querySelectorAll('.event-row.planned')){
       if(row.querySelector('h3')?.textContent!=='Annual Internal Moot Competition')continue;
       const anchor=document.createElement('a');anchor.className='event-row preview-event';anchor.href='#/event-preview';anchor.innerHTML=row.innerHTML;
@@ -180,7 +180,7 @@ export function createCMS(ctx){
       const form=main.querySelector('[data-cms-form="settings"] .form-grid');
       form.insertAdjacentHTML('beforeend',`<div class="full"><h3>Brand colours</h3><p class="small muted">Coordinate these with the Media team. Use dark text on a light background so the website stays readable.</p><div class="form-grid">${[['color_primary','Primary / buttons'],['color_background','Page background'],['color_accent','Gold / accent'],['color_text','Text colour']].map(([k,l])=>input(k,l,state().settings[k],'color')).join('')}</div></div>`);
     }
-    if(section==='events')main.querySelector('.cms-content').insertAdjacentHTML('beforeend',`<section class="panel"><h3>Annual Moot Competition page</h3><p class="small muted">Update the registration form, Drive folder, schedule and participation details here. Changes go live after saving. Upload the moot problem or schedule PDFs through Edit on the event above.</p>${settingsForm(`${input('moot_registration','Registration form (responder link)',s.moot_registration??mootRegistration,'url')}${input('moot_drive','Google Drive updates folder',s.moot_drive??mootDrive,'url')}<div class="full">${input('moot_schedule','Competition dates / schedule',s.moot_schedule??defaultMootSchedule,'textarea')}</div><div class="full">${input('moot_participation','Participation details',s.moot_participation??defaultMootParticipation,'textarea')}</div>`)}</section><section class="panel"><h3>Moot page visibility</h3><p class="small muted">Turning this off returns the planned Moot event to grey, non-clickable text.</p><form data-cms-form="settings"><label for="preview-toggle">Page availability</label><select name="moot_preview" id="preview-toggle"><option value="true" ${s.moot_preview?'selected':''}>Show the event page</option><option value="false" ${!s.moot_preview?'selected':''}>Hide the page — planned event only</option></select><button class="btn" style="margin-top:15px">Save visibility</button><p class="error" role="alert"></p></form></section>`);
+    if(section==='events')main.querySelector('.cms-content').insertAdjacentHTML('beforeend',`<section class="panel"><h3>Annual Moot Competition page</h3><p class="small muted">Update the registration form, Drive folder, schedule and participation details here. Changes go live after saving. Upload the moot problem or schedule PDFs through Edit on the event above.</p>${settingsForm(`${input('moot_registration','Registration form (responder link)',s.moot_registration??mootRegistration,'url')}${input('moot_drive','Google Drive updates folder',s.moot_drive??mootDrive,'url')}<div class="full">${input('moot_schedule','Competition dates / schedule',s.moot_schedule??defaultMootSchedule,'textarea')}</div><div class="full">${input('moot_participation','Participation details',s.moot_participation??defaultMootParticipation,'textarea')}</div>`)}</section><section class="panel"><h3>Moot page visibility</h3><p class="small muted">Admin only keeps the event grey and non-clickable for visitors. Administrators can still open the preview at #/event-preview.</p><form data-cms-form="settings"><label for="preview-toggle">Page availability</label><select name="moot_public" id="preview-toggle"><option value="false" ${s.moot_public!==true?'selected':''}>Admin only — keep event grey</option><option value="true" ${s.moot_public===true?'selected':''}>Public — allow visitors to open</option></select><button class="btn" style="margin-top:15px">Save visibility</button><p class="error" role="alert"></p></form></section>`);
   }
   function decorateDialog(){
     const form=dialog.querySelector('[data-form="save-event"],[data-form="save-topic"]');if(!form)return;
@@ -241,6 +241,7 @@ export function createCMS(ctx){
         const settings={...data};
         if('logo_3d' in settings)settings.logo_3d=settings.logo_3d==='true';
         if('moot_preview' in settings)settings.moot_preview=settings.moot_preview==='true';
+        if('moot_public' in settings)settings.moot_public=settings.moot_public==='true';
         for(const key of Object.keys(settings))if(key.startsWith('purpose-'))delete settings[key];
         if(form.querySelector('#member-rows'))settings.committee=[...form.querySelectorAll('[data-member]')].map(row=>[row.querySelector('[data-position]').value.trim(),row.querySelector('[data-name]').value.trim()]);
         if(form.querySelector('#principle-rows'))settings.principles=[...form.querySelectorAll('[data-principle]')].map(row=>[...row.querySelectorAll('input,textarea')].map(i=>i.value.trim()));

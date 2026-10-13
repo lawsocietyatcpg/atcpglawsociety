@@ -27,6 +27,14 @@ export default async function handler(req, res) {
     } else {
       delete state.reports;
       for (const comment of state.comments) delete comment.user;
+      if (state.settings.moot_public !== true) {
+        for (const key of ['moot_registration', 'moot_drive', 'moot_schedule', 'moot_participation']) delete state.settings[key];
+        const moot = state.events.find(event => event.id === '1');
+        if (moot) {
+          moot.registration = '';
+          moot.documents = [];
+        }
+      }
     }
     state.user = user?.profileComplete || user?.role === 'admin'
       ? { id: user.id, name: user.name, role: user.role }

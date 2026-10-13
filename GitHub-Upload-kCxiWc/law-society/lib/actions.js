@@ -49,7 +49,7 @@ function validateSettings(settings) {
     if (key === 'committee' || key === 'principles') {
       const width = key === 'committee' ? 2 : 3;
       if (!Array.isArray(value) || value.length > 60 || !value.every(row => Array.isArray(row) && row.length === width && row.every(cell => typeof cell === 'string' && cell.length <= 5000))) throw new Error('Please check the committee or purpose rows.');
-    } else if (key === 'logo_3d' || key === 'moot_preview') {
+    } else if (key === 'logo_3d' || key === 'moot_preview' || key === 'moot_public') {
       if (typeof value !== 'boolean') throw new Error('Invalid display setting.');
     } else if (key.startsWith('color_')) {
       if (typeof value !== 'string' || !/^#[\da-fA-F]{6}$/.test(value)) throw new Error('Choose a valid colour.');
