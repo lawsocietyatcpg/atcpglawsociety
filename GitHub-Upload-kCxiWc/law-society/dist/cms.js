@@ -80,8 +80,8 @@ export function createCMS(ctx){
     const schedule=s.moot_schedule??defaultMootSchedule;
     const participation=s.moot_participation??defaultMootParticipation;
     const documents=event?.documents||[];
-    const problem=documents.find(d=>/moot\s*problem/i.test(d.name));
-    const scheduleFiles=documents.filter(d=>!problem||d.path!==problem.path);
+    const problem=documents.find(d=>/moot\s*(problem|question)/i.test(d.name)||/^ATC INTERNAL MOOT COMPETITION 2026(?:\.pdf)?$/i.test(d.name.trim()));
+    const otherDocuments=documents.filter(d=>!problem||d.path!==problem.path);
     main.innerHTML=`<div class="event-preview moot-preview">
       <div class="wrap moot-topline"><a href="#/events">Back to events</a><span class="preview-label">Competition information</span></div>
       <section class="moot-header"><div class="wrap">
@@ -96,10 +96,11 @@ export function createCMS(ctx){
           <section class="moot-about"><div class="eyebrow"><span class="section-no">01</span> The competition</div><h2>Put theory<br>into practice.</h2><p>${esc(event?.description||'Develop legal research and oral advocacy through our annual internal moot competition.')}</p>${registration?`<a class="btn moot-register" href="${esc(registration)}" target="_blank" rel="noopener noreferrer">Register your team</a>`:''}</section>
           <section class="moot-downloads" aria-labelledby="moot-download-title"><div class="eyebrow"><span class="section-no">02</span> Resources</div><h2 id="moot-download-title">Competition documents</h2>
             <div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>Moot problem</h3><p>${problem?'Official competition problem.':'No release yet.'}</p></div>${problem?`<a href="${esc(problem.path)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">View PDF</a>`:'<span class="file-pending">Not released</span>'}</div>
+            ${otherDocuments.map(d=>`<div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>${esc(d.name.replace(/\.pdf$/i,''))}</h3><p>Competition document.</p></div><a href="${esc(d.path)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">View PDF</a></div>`).join('')}
             <div class="moot-file"><span class="file-tag drive-tag" aria-hidden="true">DRIVE</span><div><h3>Competition updates & clarifications</h3><p>Find the moot question, clarifications and updated files in the society’s Google Drive.</p></div>${drive?`<a href="${esc(drive)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">Open Drive</a>`:'<span class="file-pending">Link to follow</span>'}</div>
           </section>
         </div>
-        <section class="moot-schedule" aria-labelledby="moot-schedule-title"><div class="eyebrow"><span class="section-no">03</span> On this website</div><h2 id="moot-schedule-title">Schedule & participation</h2><div class="moot-schedule-grid"><div><h3>Competition dates</h3><p>${br(schedule)||'Schedule to be confirmed.'}</p></div><div><h3>Who can take part</h3><p>${br(participation)||'Participation details to follow.'}</p></div></div>${scheduleFiles.length?`<div class="moot-schedule-files"><h3>Further documents</h3>${scheduleFiles.map(d=>`<a href="${esc(d.path)}" target="_blank" rel="noopener noreferrer">${esc(d.name)} · View PDF</a>`).join('')}</div>`:''}</section>
+        <section class="moot-schedule" aria-labelledby="moot-schedule-title"><div class="eyebrow"><span class="section-no">03</span> On this website</div><h2 id="moot-schedule-title">Schedule & participation</h2><div class="moot-schedule-grid"><div><h3>Competition dates</h3><p>${br(schedule)||'Schedule to be confirmed.'}</p></div><div><h3>Who can take part</h3><p>${br(participation)||'Participation details to follow.'}</p></div></div></section>
         <section class="moot-photos" aria-labelledby="moot-photo-title"><div class="moot-photo-heading"><div><div class="eyebrow"><span class="section-no">04</span> Gallery</div><h2 id="moot-photo-title">From the competition</h2></div><p>Actual photos will follow the event.</p></div>
           <div class="moot-photo-grid">${['Group photograph','Oral submissions','Closing moments'].map((name,i)=>`<figure><div class="moot-photo-slot" aria-label="Photo placeholder: ${name}"><svg viewBox="0 0 40 32" fill="none" aria-hidden="true"><rect x="1" y="1" width="38" height="30" rx="1" stroke="currentColor"/><circle cx="28" cy="10" r="3" stroke="currentColor"/><path d="M2 27 13 15l8 8 5-5 12 12" stroke="currentColor"/></svg><span>Photo to come</span></div><figcaption><span>0${i+1}</span>${name}</figcaption></figure>`).join('')}</div>
         </section>
