@@ -236,3 +236,7 @@ footer { background:transparent; color:var(--muted); }
 .event-copy li>ul,.event-copy li>ol{margin:.3em 0 .5em;}
 .event-copy ul{list-style-type:disc;}.event-copy ul ul{list-style-type:circle;}.event-copy ul ul ul{list-style-type:square;}
 .event-copy ol{list-style-type:decimal;}.event-copy li>ol{list-style-type:lower-alpha;}.event-copy li li>ol{list-style-type:lower-roman;}
+.event-detail>.event-resources{max-width:880px;margin:28px auto;}
+.event-resources .resource-row>span,.document-manager .admin-item>a{min-width:0;overflow-wrap:anywhere;}
+.event-resources .resource-row .btn{flex-shrink:0;}
+@media(max-width:640px){.event-resources .resource-row{align-items:flex-start;flex-wrap:wrap;gap:12px;}}

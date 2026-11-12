@@ -380,7 +380,7 @@ class Handler(SimpleHTTPRequestHandler):
                     name = secrets.token_hex(16)+'.'+ext
                     (folder/name).write_bytes(raw)
                     if event is None: state['settings']['logo']='/uploads/'+name
-                    elif ext=='pdf': event.setdefault('documents',[]).append({'name':required(data.get('name','Document'),160),'path':'/uploads/'+name})
+                    elif ext=='pdf': event.setdefault('documents',[]).append({'name':required(data.get('name','Document'),255),'path':'/uploads/'+name})
                     else: event['photos'].append('/uploads/'+name)
                 else:
                     return self.reply({'error':'Unknown action.'},404)

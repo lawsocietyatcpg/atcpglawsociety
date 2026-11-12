@@ -78,8 +78,9 @@ def run():
             request('photo-details',{'id':event['id'],'path':photo,'caption':'Test photograph caption','cover':True},admin)
             state,_=request();assert state['events'][-1]['photo_captions'][photo]=='Test photograph caption'
             pdf=b'%PDF-1.4\n% isolated test fixture'
-            request('upload',{'id':event['id'],'target':'document','name':'Test problem PDF','image':base64.b64encode(pdf).decode()},admin)
-            state,_=request();assert state['events'][-1]['documents'][0]['name']=='Test problem PDF'
+            document_name='Courtesy Visit to YB Lim Hui Ying, Deputy Minister of Women, Family and Community Development & Courtesy Visit to YB Teo Nie Ching, Deputy Minister o Communications_compressed.pdf'
+            request('upload',{'id':event['id'],'target':'document','name':document_name,'image':base64.b64encode(pdf).decode()},admin)
+            state,_=request();assert state['events'][-1]['documents'][0]['name']==document_name
             c=http.client.HTTPConnection('127.0.0.1',server.PORT)
             c.request('GET','/api/backup',headers={'Cookie':admin});r=c.getresponse();archive=r.read();assert r.status==200;c.close()
             with zipfile.ZipFile(io.BytesIO(archive)) as bundle:

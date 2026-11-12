@@ -5,13 +5,13 @@ import {mountLogo} from './logo3d.js';
 
 export function createCMS(ctx){
   const {getState,getMemberAuth,main,dialog,esc,api,load,render,refresh,showDialog,toast,editItem}=ctx;
-  let section='home',dispose=()=>{},dirty=false,importFile=null;
+  let section='home',dispose=()=>{},dirty=false,importFile=null,uploadingDocument=false;
   const captionAutosave=createCaptionAutosave({
     save:async(id,path,caption)=>{await api('photo-details',{id,path,caption});const event=getState().events.find(event=>event.id===id);if(event){event.photo_captions||={};event.photo_captions[path]=caption;}},
     status:(id,path,message,failed)=>{for(const input of dialog.querySelectorAll('[data-caption]')){if(input.dataset.event===id&&input.dataset.path===path){const box=input.closest('div');box.querySelector('[data-caption-status]').textContent=message;box.querySelector('[data-caption-retry]').hidden=!failed;}}},
     error:message=>toast(message)
   });
-  dialog.addEventListener('cancel',event=>{if(captionAutosave.pending()){event.preventDefault();captionAutosave.flush().then(()=>dialog.close()).catch(()=>{});}});
+  dialog.addEventListener('cancel',event=>{if(uploadingDocument){event.preventDefault();toast('Please wait for the PDF upload to finish.');return;}if(captionAutosave.pending()){event.preventDefault();captionAutosave.flush().then(()=>dialog.close()).catch(()=>{});}});
   document.addEventListener('input',event=>{const input=event.target;if(input.matches('[data-caption]'))captionAutosave.edit(input.dataset.event,input.dataset.path,input.value);});
   document.addEventListener('change',event=>{if(event.target.matches('[data-caption]'))captionAutosave.flush().catch(()=>{});});
   document.addEventListener('click',event=>{if(event.target.closest('[data-caption-retry]'))captionAutosave.flush().catch(()=>{});});
@@ -124,7 +124,7 @@ export function createCMS(ctx){
     const event=state().events.find(e=>e.id===id);if(!event||event.status==='planned')return;
     if(id==='biweekly'){biweeklyLanding();return}
     const documents=event.documents||[];
-    if(documents.length)main.querySelector('.gallery')?.insertAdjacentHTML('beforebegin',`<section class="event-resources"><h3>Event resources</h3>${documents.map(d=>`<div class="resource-row"><span>${esc(d.name)}</span><a class="btn outline" href="${esc(d.path)}" download>Download PDF</a></div>`).join('')}</section>`);
+    if(documents.length)main.querySelector('.event-copy')?.insertAdjacentHTML('beforebegin',`<section class="event-resources"><h3>Event documents</h3>${documents.map(d=>`<div class="resource-row"><span>${esc(d.name)}</span><a class="btn outline" href="${esc(d.path)}" target="_blank" rel="noopener noreferrer">View PDF</a></div>`).join('')}</section>`);
     main.querySelector('.gallery')?.classList.add('event-gallery');
     const gallery=main.querySelector('.gallery');
     if(gallery)gallery.innerHTML=event.photos.map((path,i)=>`<figure><button class="photo-open" data-cms="view-photo" data-event="${event.id}" data-index="${i}"><img src="${esc(path)}" alt="${esc(event.photo_captions?.[path]||event.title+' — photograph '+(i+1))}" loading="lazy"></button>${event.photo_captions?.[path]?`<figcaption>${esc(event.photo_captions[path])}</figcaption>`:''}</figure>`).join('');
@@ -198,12 +198,12 @@ export function createCMS(ctx){
     const old=dialog.querySelector('.photo-manager');old?.remove();
     if(!isTopic)form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="photo-manager">${event.photos.map((path,i)=>`<div><img src="${esc(path)}" alt="Event photograph"><label>Photo caption<input data-caption data-event="${id}" data-path="${esc(path)}" value="${esc(captionAutosave.getValue(id,path,event.photo_captions?.[path]||''))}" maxlength="300"></label><small data-caption-status role="status">${esc(captionAutosave.getStatus(id,path))}</small><button type="button" class="text-button" data-caption-retry hidden>Retry saving caption</button><button type="button" class="text-button" data-cms="photo-details" data-cover="true" data-id="${id}" data-path="${esc(path)}" ${i===0?'disabled':''}>${i===0?'Cover photograph':'Use as cover'}</button><button type="button" class="text-button danger" data-cms="remove-photo" data-id="${id}" data-path="${esc(path)}">Remove photograph</button></div>`).join('')}</div>`);
     form.querySelector('.document-manager')?.remove();
-    form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="document-manager"><h3>PDFs for website viewing</h3><p class="small muted">${isTopic?'Add the research PDF or references for this topic. Each topic has its own files.':'Add the Moot Question, schedule or competition documents.'} Visitors see View PDF, not a download button. A public PDF can still be saved using browser tools. Uploads save immediately.</p><label>Document name<input data-document-name placeholder="e.g. ${isTopic?'Research notes':'Moot Question 2026'}"></label><label>Add PDF (up to 5 MB)<input type="file" accept="application/pdf" data-cms-upload="document" data-event="${id}" ${isTopic?'data-collection="topic"':''}></label>${(event.documents||[]).map(d=>`<div class="admin-item"><a href="${esc(d.path)}" target="_blank" rel="noopener">${esc(d.name)}</a><button type="button" class="text-button danger" data-cms="remove-document" data-id="${id}" data-path="${esc(d.path)}" ${isTopic?'data-collection="topic"':''}>Remove</button></div>`).join('')}</div>`);
+    form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="document-manager"><h3>PDFs for website viewing</h3><p class="small muted">${isTopic?'Add the research PDF or references for this topic. Each topic has its own files.':'Add an event poster, report, itinerary or other PDF.'} Visitors see View PDF, not a download button. A public PDF can still be saved using browser tools. Uploads save immediately.</p><label>Document name<input data-document-name maxlength="255" placeholder="e.g. ${isTopic?'Research notes':'Moot Question 2026'}"></label><p class="small muted" data-document-upload-status role="status">Choose a PDF to upload. A successful upload is saved immediately; Save event is for text and links.</p><label>Add PDF (up to 5 MB)<input type="file" accept="application/pdf" data-cms-upload="document" data-event="${id}" ${isTopic?'data-collection="topic"':''}></label>${(event.documents||[]).map(d=>`<div class="admin-item"><a href="${esc(d.path)}" target="_blank" rel="noopener">${esc(d.name)}</a><button type="button" class="text-button danger" data-cms="remove-document" data-id="${id}" data-path="${esc(d.path)}" ${isTopic?'data-collection="topic"':''}>Remove</button></div>`).join('')}</div>`);
   }
   function warnBefore(callback){if(!dirty)return callback();showDialog('<h2>Unsaved changes</h2><p>Save your edits first, or discard them to continue.</p><div class="dialog-foot"><button class="btn outline" data-action="close">Keep editing</button><button class="btn" data-cms="discard">Discard changes</button></div>');dialog.querySelector('[data-cms="discard"]').onclick=()=>{dirty=false;dialog.close();callback()}}
   function confirmAction(title,body,action,data){showDialog(`<h2>${title}</h2><p>${body}</p><form data-cms-form="${action}"><input type="hidden" name="id" value="${esc(data.id||'')}"><div class="dialog-foot"><button type="button" class="btn outline" data-action="close">Cancel</button><button class="btn" type="submit">Confirm</button></div><p class="error" role="alert"></p></form>`)}
   document.addEventListener('input',e=>{if(e.target.closest('[data-cms-form="settings"]')){dirty=true;const status=e.target.closest('form').querySelector('[data-save-status]');if(status)status.textContent='You have unsaved changes.'}});
-  window.addEventListener('beforeunload',e=>{if(dirty||captionAutosave.pending()){e.preventDefault();e.returnValue=''}});
+  window.addEventListener('beforeunload',e=>{if(dirty||uploadingDocument||captionAutosave.pending()){e.preventDefault();e.returnValue=''}});
   document.addEventListener('click',e=>{const anchor=e.target.closest('a[href^="#/"]');if(anchor&&dirty){e.preventDefault();e.stopImmediatePropagation();warnBefore(()=>{location.hash=anchor.getAttribute('href')})}},true);
   document.addEventListener('click',async e=>{
     const b=e.target.closest('[data-cms], [data-action="admin-login"], [data-action="account"]');
@@ -268,14 +268,25 @@ export function createCMS(ctx){
         if(file.size>50_000_000)throw Error('Choose a backup under 50 MB.');importFile=file;
         return confirmAction('Import this backup?',`Replace current content with ${esc(file.name)}? Current content will be saved as a recovery version. Your administrator credentials will not change.`,'import-backup',{});
       }
-      if(file.size>5_000_000)throw Error('Choose an image under 5 MB.');
+      if(file.size>5_000_000)throw Error(control.dataset.cmsUpload==='document'?'Choose a PDF under 5 MB.':'Choose an image under 5 MB.');
       if(control.dataset.cmsUpload==='document'){
         const name=dialog.querySelector('[data-document-name]').value.trim()||file.name;
-        control.disabled=true;await api('upload',{id:control.dataset.event,target:'document',collection:control.dataset.collection,name,image:await readFile(file)});await load();decorateDialog();toast('PDF saved.');return;
+        if(name.length>255)throw Error('Please keep the document name within 255 characters.');
+        if(await file.slice(0,5).text()!=='%PDF-')throw Error('Please choose a valid PDF file.');
+        uploadingDocument=true;control.disabled=true;
+        const saveButton=control.closest('form').querySelector('[type="submit"]');if(saveButton)saveButton.disabled=true;
+        dialog.querySelector('[data-document-upload-status]').textContent='Uploading PDF… Please keep this window open.';
+        try{
+          await api('upload',{id:control.dataset.event,target:'document',collection:control.dataset.collection,name,image:await readFile(file)});
+          await load();decorateDialog();
+          dialog.querySelector('[data-document-upload-status]').textContent='PDF saved and attached. Visitors can now open it.';
+          toast('PDF saved and attached.');
+        }finally{uploadingDocument=false;if(saveButton)saveButton.disabled=false;}
+        return;
       }
       control.disabled=true;await api('upload',{target:'logo',image:await readFile(file)});await load();decorateShell();toast('Logo saved.');
       const thumb=document.querySelector('.logo-thumb');if(thumb)thumb.src=logoSource(state().settings.logo);
-    }catch(err){toast(err.message)}finally{control.disabled=false}
+    }catch(err){if(control.dataset.cmsUpload==='document'){const status=dialog.querySelector('[data-document-upload-status]');if(status)status.textContent='PDF not saved: '+err.message;control.value='';}toast(err.message)}finally{control.disabled=false}
   });
-  return {decorateShell,decorateHome,decorateEventList,decorateEvent,biweeklyLanding,decorateTopic,eventPreview,disposeLogo,renderAdmin,openLogin,decorateDialog,flushCaptions:()=>captionAutosave.flush()};
+  return {decorateShell,decorateHome,decorateEventList,decorateEvent,biweeklyLanding,decorateTopic,eventPreview,disposeLogo,renderAdmin,openLogin,decorateDialog,flushCaptions:async()=>{if(uploadingDocument)throw Error('Please wait for the PDF upload to finish.');await captionAutosave.flush();}};
 }

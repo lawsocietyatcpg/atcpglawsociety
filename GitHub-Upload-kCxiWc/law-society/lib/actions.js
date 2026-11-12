@@ -170,7 +170,7 @@ export function applyAction(state, action, data, user, uploadedUrl) {
       const event = item(state, data.collection === 'topic' ? 'topics' : 'events', ident);
       if (data.target === 'document') {
         event.documents ||= [];
-        event.documents.push({ name: required(data.name || 'Document', 160), path: uploadedUrl });
+        event.documents.push({ name: required(data.name || 'Document', 255), path: uploadedUrl });
       } else event.photos.push(uploadedUrl);
     }
   } else {
