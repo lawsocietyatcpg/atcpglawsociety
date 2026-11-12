@@ -15,8 +15,16 @@ function inlineUnescaped(text) {
   });
 }
 export function renderEventDescription(value) {
-  return String(value ?? '').replace(/\r\n?/g, '\n').trim().split(/\n\s*\n/).filter(Boolean)
-    .map(paragraph => `<p>${paragraph.split('\n').map(inline).join('<br>')}</p>`).join('');
+  const blocks = [], paragraph = [];
+  const flush = () => { if (paragraph.length) blocks.push(`<p>${paragraph.splice(0).map(inline).join('<br>')}</p>`); };
+  for (const line of String(value ?? '').replace(/\r\n?/g, '\n').trim().split('\n')) {
+    const heading = line.match(/^#{1,6}\s+(.+)$/);
+    if (heading) { flush(); blocks.push(`<h3>${inline(heading[1])}</h3>`); }
+    else if (!line.trim()) flush();
+    else paragraph.push(line);
+  }
+  flush();
+  return blocks.join('');
 }
 export function eventDescriptionEditor(value) {
   return `<section class="event-description-editor"><label for="f-description">Caption / description / event recap</label><div class="event-format-toolbar" role="group" aria-label="Caption formatting"><button type="button" class="btn outline" data-event-format="**" aria-label="Bold"><strong>B</strong></button><button type="button" class="btn outline" data-event-format="*" aria-label="Italic"><em>I</em></button><button type="button" class="btn outline" data-event-format="++" aria-label="Underline"><u>U</u></button></div><textarea id="f-description" name="description" rows="9" aria-describedby="caption-help">${escape(value)}</textarea><p id="caption-help" class="small muted">Select text and choose Bold, Italic or Underline. Separate paragraphs with a blank line. Check the preview below before saving.</p><div class="caption-preview-label small muted">Caption preview</div><div class="event-copy caption-preview" aria-label="Caption preview">${renderEventDescription(value)}</div></section>`;
