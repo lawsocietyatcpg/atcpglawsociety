@@ -144,6 +144,8 @@ def validate_backup(state):
             for key in ['instagram','meet','registration']:
                 if key in row and row[key] and not row[key].startswith('https://'): raise ValueError('Unsafe link in backup.')
             if collection=='events':
+                links=row.get('links',[])
+                if not isinstance(links,list) or len(links)>50 or not all(isinstance(entry,dict) and isinstance(entry.get('name'),str) and 0<len(entry['name'].strip())<=160 and isinstance(entry.get('url'),str) and entry['url'].startswith('https://') and len(entry['url'])<=2000 for entry in links): raise ValueError('Invalid event links in backup.')
                 if row['status'] not in ['planned','upcoming','ongoing','past'] or not all(valid_asset(p) for p in row['photos']): raise ValueError('Invalid event in backup.')
                 if not all(isinstance(d,dict) and isinstance(d.get('name'),str) and valid_document(d.get('path')) for d in row.get('documents',[])): raise ValueError('Invalid document in backup.')
             if collection=='topics' and row['status'] not in ['upcoming','open','archived']: raise ValueError('Invalid topic status.')

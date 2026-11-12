@@ -1,3 +1,4 @@
+import {validateEventLinks} from './actions.js';
 import JSZip from 'jszip';
 import { randomBytes } from 'node:crypto';
 
@@ -49,6 +50,7 @@ export async function readUploadedBackup(service, path) {
   const body = JSON.parse(await zip.file('content.json').async('string'));
   if (!body || typeof body !== 'object' || !body.settings || !Array.isArray(body.events) || !Array.isArray(body.topics) || !Array.isArray(body.posts) || !Array.isArray(body.comments) || !Array.isArray(body.reactions) || !Array.isArray(body.reports)) throw new Error('This is not a Law Society content backup.');
   if (body.events.length > 1000 || body.topics.length > 1000 || body.posts.length > 100000) throw new Error('Backup contains too many records.');
+  for (const event of body.events) event.links = validateEventLinks(event.links ?? []);
   for (const reference of referencedAssets(body)) {
     const name = assetName(reference);
     if (!name) continue;

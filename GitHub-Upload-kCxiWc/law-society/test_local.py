@@ -58,9 +58,15 @@ def run():
             request('pin',{'id':post},admin)
             state,_=request(cookie=admin);assert state['posts'][0]['pinned'] and len(state['reports'])==1
             request('resolve-report',{'id':state['reports'][0]['id']},admin)
-            request('save-event',{'title':'QA Event','date':'Tomorrow','category':'Test','description':'QA recap','status':'past','registration':'','instagram':'https://www.instagram.com/p/qa-event/'},admin)
+            request('save-event',{'title':'QA Event','date':'Tomorrow','category':'Test','description':'QA recap','status':'past','registration':'','instagram':'https://www.instagram.com/p/qa-event/','links':[{'name':'Watch the replay','url':'https://example.com/replay'},{'name':'LinkedIn','url':'https://www.linkedin.com/'}]},admin)
             state,_=request();event=state['events'][-1];assert event['title']=='QA Event'
             assert event['instagram']=='https://www.instagram.com/p/qa-event/'
+            assert len(event['links'])==2
+            request('save-event',{**event,'links':[{'name':'Unsafe','url':'javascript:alert(1)'}]},admin,400)
+            request('save-event',{**event,'links':[{'name':'','url':'https://example.com'}]},admin,400)
+            request('save-event',{**event,'links':[]},admin)
+            cleared_links,_=request();assert cleared_links['events'][-1]['links']==[]
+            request('save-event',event,admin)
             request('save-event',{**event,'instagram':'javascript:alert(1)'},admin,400)
             request('save-event',{**event,'instagram':''},admin)
             cleared,_=request();assert cleared['events'][-1]['instagram']==''
@@ -83,6 +89,7 @@ def run():
             request('import-backup',{'archive':base64.b64encode(archive).decode()},admin)
             state,_=request();assert state['events'][-1]['photo_captions'][photo]=='Test photograph caption'
             assert state['events'][-1]['instagram']==event['instagram']
+            assert state['events'][-1]['links']==event['links']
             request('remove-photo',{'id':event['id'],'path':photo},admin)
             state,_=request();assert not state['events'][-1]['photos']
             bad=io.BytesIO()

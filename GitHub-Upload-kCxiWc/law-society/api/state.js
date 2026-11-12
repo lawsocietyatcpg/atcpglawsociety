@@ -32,6 +32,8 @@ export default async function handler(req, res) {
         const moot = state.events.find(event => event.id === '1');
         if (moot) {
           moot.registration = '';
+          moot.instagram = '';
+          moot.links = [];
           moot.documents = [];
         }
       }

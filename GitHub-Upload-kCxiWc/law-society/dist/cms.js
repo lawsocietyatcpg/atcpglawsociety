@@ -1,9 +1,20 @@
+import {renderEventLinks} from './event-links.js';
+import {createCaptionAutosave} from './caption-autosave.js';
 import {renderEventDescription} from './event-content.js';
 import {mountLogo} from './logo3d.js';
 
 export function createCMS(ctx){
   const {getState,getMemberAuth,main,dialog,esc,api,load,render,refresh,showDialog,toast,editItem}=ctx;
   let section='home',dispose=()=>{},dirty=false,importFile=null;
+  const captionAutosave=createCaptionAutosave({
+    save:async(id,path,caption)=>{await api('photo-details',{id,path,caption});const event=getState().events.find(event=>event.id===id);if(event){event.photo_captions||={};event.photo_captions[path]=caption;}},
+    status:(id,path,message,failed)=>{for(const input of dialog.querySelectorAll('[data-caption]')){if(input.dataset.event===id&&input.dataset.path===path){const box=input.closest('div');box.querySelector('[data-caption-status]').textContent=message;box.querySelector('[data-caption-retry]').hidden=!failed;}}},
+    error:message=>toast(message)
+  });
+  dialog.addEventListener('cancel',event=>{if(captionAutosave.pending()){event.preventDefault();captionAutosave.flush().then(()=>dialog.close()).catch(()=>{});}});
+  document.addEventListener('input',event=>{const input=event.target;if(input.matches('[data-caption]'))captionAutosave.edit(input.dataset.event,input.dataset.path,input.value);});
+  document.addEventListener('change',event=>{if(event.target.matches('[data-caption]'))captionAutosave.flush().catch(()=>{});});
+  document.addEventListener('click',event=>{if(event.target.closest('[data-caption-retry]'))captionAutosave.flush().catch(()=>{});});
   const titles={home:'Home & branding',about:'About & committee',events:'Events',topics:'Legal topics',contact:'Contact',moderation:'Moderation',members:'Member register',account:'Account & backups'};
   const br=s=>esc(s).replace(/\n/g,'<br>');
   const input=(key,label,value,type='text',hint='')=>`<div class="cms-field"><label for="cms-${key}">${label}</label>${type==='textarea'?`<textarea id="cms-${key}" name="${key}" rows="3">${esc(value)}</textarea>`:`<input id="cms-${key}" name="${key}" type="${type}" value="${esc(value)}">`}${hint?`<small class="muted">${hint}</small>`:''}</div>`;
@@ -94,7 +105,7 @@ export function createCMS(ctx){
       <div class="wrap moot-body">
         <p class="moot-disclaimer">Competition dates and participation details may be updated by the society. Please check this page for the latest schedule.</p>
         <div class="moot-overview">
-          <section class="moot-about"><div class="eyebrow"><span class="section-no">01</span> The competition</div><h2>Put theory<br>into practice.</h2><div class="event-copy moot-description">${renderEventDescription(event?.description||'Develop legal research and oral advocacy through our annual internal moot competition.')}</div>${registration?`<a class="btn moot-register" href="${esc(registration)}" target="_blank" rel="noopener noreferrer">Register your team</a>`:''}${safeLink(event?.instagram)?`<a class="btn outline" href="${esc(safeLink(event.instagram))}" target="_blank" rel="noopener noreferrer">View Instagram post</a>`:''}</section>
+          <section class="moot-about"><div class="eyebrow"><span class="section-no">01</span> The competition</div><h2>Put theory<br>into practice.</h2><div class="event-copy moot-description">${renderEventDescription(event?.description||'Develop legal research and oral advocacy through our annual internal moot competition.')}</div>${registration?`<a class="btn moot-register" href="${esc(registration)}" target="_blank" rel="noopener noreferrer">Register your team</a>`:''}${safeLink(event?.instagram)?`<a class="btn outline" href="${esc(safeLink(event.instagram))}" target="_blank" rel="noopener noreferrer">View Instagram post</a>`:''}<div class="event-actions">${renderEventLinks(event,{instagram:false})}</div></section>
           <section class="moot-downloads" aria-labelledby="moot-download-title"><div class="eyebrow"><span class="section-no">02</span> Resources</div><h2 id="moot-download-title">Competition documents</h2>
             <div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>Moot Question</h3><p>${problem?'Official competition question.':'No release yet.'}</p></div>${problem?`<a href="${esc(problem.path)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">View PDF</a>`:'<span class="file-pending">Not released</span>'}</div>
             ${otherDocuments.map(d=>`<div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>${esc(d.name.replace(/\.pdf$/i,''))}</h3><p>Competition document.</p></div><a href="${esc(d.path)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">View PDF</a></div>`).join('')}
@@ -123,7 +134,7 @@ export function createCMS(ctx){
     const upcoming=state().topics.filter(topic=>topic.status!=='archived');
     const past=state().topics.filter(topic=>topic.status==='archived');
     const cards=items=>items.map((topic,index)=>`<a class="biweekly-topic" href="#/topic/${encodeURIComponent(topic.id)}"><span class="biweekly-number">${String(index+1).padStart(2,'0')}</span><div><span class="eyebrow">${topic.status==='open'?'Open for discussion':topic.status==='archived'?'Past topic':'Coming up'}</span><h3>${esc(topic.title)}</h3><p>${esc(topic.summary||'Topic details will be added by the society.')}</p><small>${topic.documents?.length?`${topic.documents.length} PDF${topic.documents.length===1?'':'s'} available · `:''}${topic.discussion?`Discussion ${friendlyDate(topic.discussion)}`:'Discussion date to follow'}</small></div><span class="biweekly-arrow" aria-hidden="true">View topic</span></a>`).join('');
-    main.innerHTML=`<div class="wrap page biweekly-page"><div class="breadcrumbs"><a href="#/events">Events</a> / Biweekly legal knowledge</div><span class="eyebrow">A continuing society programme</span><h1 class="page-title">${esc(event?.title||'Biweekly legal knowledge')}</h1><p class="topic-intro">${esc(event?.description||state().settings.dialogue_intro)}</p><p class="small muted">Read the topic materials and discuss directly on this website. There is no separate online meeting.</p><section class="biweekly-group"><div class="biweekly-group-head"><h2>Current & upcoming</h2><span>${upcoming.length} topic${upcoming.length===1?'':'s'}</span></div>${cards(upcoming)||'<p class="muted">New topics will appear here.</p>'}</section><section class="biweekly-group"><div class="biweekly-group-head"><h2>Past topics</h2><span>${past.length} topic${past.length===1?'':'s'}</span></div>${cards(past)||'<p class="muted">Completed discussions will be kept here for reference.</p>'}</section></div>`;
+    main.innerHTML=`<div class="wrap page biweekly-page"><div class="breadcrumbs"><a href="#/events">Events</a> / Biweekly legal knowledge</div><span class="eyebrow">A continuing society programme</span><h1 class="page-title">${esc(event?.title||'Biweekly legal knowledge')}</h1><p class="topic-intro">${esc(event?.description||state().settings.dialogue_intro)}</p><div class="event-actions">${renderEventLinks(event)}</div><p class="small muted">Read the topic materials and discuss directly on this website. There is no separate online meeting.</p><section class="biweekly-group"><div class="biweekly-group-head"><h2>Current & upcoming</h2><span>${upcoming.length} topic${upcoming.length===1?'':'s'}</span></div>${cards(upcoming)||'<p class="muted">New topics will appear here.</p>'}</section><section class="biweekly-group"><div class="biweekly-group-head"><h2>Past topics</h2><span>${past.length} topic${past.length===1?'':'s'}</span></div>${cards(past)||'<p class="muted">Completed discussions will be kept here for reference.</p>'}</section></div>`;
   }
   function decorateTopic(id){
     const topic=state().topics.find(t=>t.id===id);if(!topic)return;
@@ -185,14 +196,14 @@ export function createCMS(ctx){
     const id=form.querySelector('[name="id"]').value;
     const event=state()[isTopic?'topics':'events'].find(e=>e.id===id);if(!event)return;
     const old=dialog.querySelector('.photo-manager');old?.remove();
-    if(!isTopic)form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="photo-manager">${event.photos.map((path,i)=>`<div><img src="${esc(path)}" alt="Event photograph"><label>Photo caption<input data-caption value="${esc(event.photo_captions?.[path]||'')}" maxlength="300"></label><button type="button" class="text-button" data-cms="photo-details" data-id="${id}" data-path="${esc(path)}">Save caption</button><button type="button" class="text-button" data-cms="photo-details" data-cover="true" data-id="${id}" data-path="${esc(path)}" ${i===0?'disabled':''}>${i===0?'Cover photograph':'Use as cover'}</button><button type="button" class="text-button danger" data-cms="remove-photo" data-id="${id}" data-path="${esc(path)}">Remove photograph</button></div>`).join('')}</div>`);
+    if(!isTopic)form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="photo-manager">${event.photos.map((path,i)=>`<div><img src="${esc(path)}" alt="Event photograph"><label>Photo caption<input data-caption data-event="${id}" data-path="${esc(path)}" value="${esc(captionAutosave.getValue(id,path,event.photo_captions?.[path]||''))}" maxlength="300"></label><small data-caption-status role="status">${esc(captionAutosave.getStatus(id,path))}</small><button type="button" class="text-button" data-caption-retry hidden>Retry saving caption</button><button type="button" class="text-button" data-cms="photo-details" data-cover="true" data-id="${id}" data-path="${esc(path)}" ${i===0?'disabled':''}>${i===0?'Cover photograph':'Use as cover'}</button><button type="button" class="text-button danger" data-cms="remove-photo" data-id="${id}" data-path="${esc(path)}">Remove photograph</button></div>`).join('')}</div>`);
     form.querySelector('.document-manager')?.remove();
     form.querySelector('.dialog-foot').insertAdjacentHTML('beforebegin',`<div class="document-manager"><h3>PDFs for website viewing</h3><p class="small muted">${isTopic?'Add the research PDF or references for this topic. Each topic has its own files.':'Add the Moot Question, schedule or competition documents.'} Visitors see View PDF, not a download button. A public PDF can still be saved using browser tools. Uploads save immediately.</p><label>Document name<input data-document-name placeholder="e.g. ${isTopic?'Research notes':'Moot Question 2026'}"></label><label>Add PDF (up to 5 MB)<input type="file" accept="application/pdf" data-cms-upload="document" data-event="${id}" ${isTopic?'data-collection="topic"':''}></label>${(event.documents||[]).map(d=>`<div class="admin-item"><a href="${esc(d.path)}" target="_blank" rel="noopener">${esc(d.name)}</a><button type="button" class="text-button danger" data-cms="remove-document" data-id="${id}" data-path="${esc(d.path)}" ${isTopic?'data-collection="topic"':''}>Remove</button></div>`).join('')}</div>`);
   }
   function warnBefore(callback){if(!dirty)return callback();showDialog('<h2>Unsaved changes</h2><p>Save your edits first, or discard them to continue.</p><div class="dialog-foot"><button class="btn outline" data-action="close">Keep editing</button><button class="btn" data-cms="discard">Discard changes</button></div>');dialog.querySelector('[data-cms="discard"]').onclick=()=>{dirty=false;dialog.close();callback()}}
   function confirmAction(title,body,action,data){showDialog(`<h2>${title}</h2><p>${body}</p><form data-cms-form="${action}"><input type="hidden" name="id" value="${esc(data.id||'')}"><div class="dialog-foot"><button type="button" class="btn outline" data-action="close">Cancel</button><button class="btn" type="submit">Confirm</button></div><p class="error" role="alert"></p></form>`)}
   document.addEventListener('input',e=>{if(e.target.closest('[data-cms-form="settings"]')){dirty=true;const status=e.target.closest('form').querySelector('[data-save-status]');if(status)status.textContent='You have unsaved changes.'}});
-  window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
+  window.addEventListener('beforeunload',e=>{if(dirty||captionAutosave.pending()){e.preventDefault();e.returnValue=''}});
   document.addEventListener('click',e=>{const anchor=e.target.closest('a[href^="#/"]');if(anchor&&dirty){e.preventDefault();e.stopImmediatePropagation();warnBefore(()=>{location.hash=anchor.getAttribute('href')})}},true);
   document.addEventListener('click',async e=>{
     const b=e.target.closest('[data-cms], [data-action="admin-login"], [data-action="account"]');
@@ -221,9 +232,9 @@ export function createCMS(ctx){
         const ids=state()[b.dataset.collection].map(x=>x.id),i=ids.indexOf(b.dataset.id),j=i+Number(b.dataset.direction);
         [ids[i],ids[j]]=[ids[j],ids[i]];await api('reorder',{collection:b.dataset.collection,ids});await refresh();toast('Order updated.');
       }else if(action==='remove-photo'||action==='remove-document'){
-        await api(action,{id:b.dataset.id,path:b.dataset.path,collection:b.dataset.collection});await load();decorateDialog();toast('Removed. Recover it under Account & backups if needed.');
+        await captionAutosave.flush();await api(action,{id:b.dataset.id,path:b.dataset.path,collection:b.dataset.collection});await load();decorateDialog();toast('Removed. Recover it under Account & backups if needed.');
       }else if(action==='photo-details'){
-        await api(action,{id:b.dataset.id,path:b.dataset.path,caption:b.parentElement.querySelector('[data-caption]').value,cover:b.dataset.cover==='true'});await load();decorateDialog();toast('Photo details saved.');
+        await captionAutosave.flush();await api(action,{id:b.dataset.id,path:b.dataset.path,caption:b.parentElement.querySelector('[data-caption]').value,cover:b.dataset.cover==='true'});await load();decorateDialog();toast('Photo details saved.');
       }
     }catch(err){toast(err.message)}finally{b.disabled=false}
   },true);
@@ -266,5 +277,5 @@ export function createCMS(ctx){
       const thumb=document.querySelector('.logo-thumb');if(thumb)thumb.src=logoSource(state().settings.logo);
     }catch(err){toast(err.message)}finally{control.disabled=false}
   });
-  return {decorateShell,decorateHome,decorateEventList,decorateEvent,biweeklyLanding,decorateTopic,eventPreview,disposeLogo,renderAdmin,openLogin,decorateDialog};
+  return {decorateShell,decorateHome,decorateEventList,decorateEvent,biweeklyLanding,decorateTopic,eventPreview,disposeLogo,renderAdmin,openLogin,decorateDialog,flushCaptions:()=>captionAutosave.flush()};
 }

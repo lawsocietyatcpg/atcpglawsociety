@@ -29,6 +29,13 @@ const link = value => {
   }
   return text;
 };
+export function validateEventLinks(links) {
+  if (!Array.isArray(links) || links.length > 50) throw new Error('Please use at most 50 event links.');
+  return links.map(entry => {
+    if (!entry || typeof entry !== 'object') throw new Error('Please check the event links.');
+    return { name: required(entry.name, 160), url: required(link(entry.url), 2000) };
+  });
+}
 const item = (state, collection, itemId) => {
   const found = state[collection].find(value => value.id === itemId);
   if (!found) throw new Error('This item is no longer available. Refresh the page.');
@@ -94,6 +101,7 @@ export function applyAction(state, action, data, user, uploadedUrl) {
       for (const key of ['date', 'category', 'description']) row[key] = asText(data[key] || '');
       row.registration = link(data.registration || '');
       row.instagram = link(data.instagram || '');
+      row.links = validateEventLinks(data.links ?? row.links ?? []);
       row.photos ||= [];
       row.documents ||= [];
     } else {

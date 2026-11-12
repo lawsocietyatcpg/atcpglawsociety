@@ -336,6 +336,10 @@ class Handler(SimpleHTTPRequestHandler):
                             item[key] = clean(data.get(key,''))
                         item['registration'] = link(data.get('registration',''))
                         item['instagram'] = link(data.get('instagram',''))
+                        links = data.get('links',item.get('links',[]))
+                        if not isinstance(links,list) or len(links)>50: raise ValueError('Please use at most 50 event links.')
+                        if not all(isinstance(entry,dict) for entry in links): raise ValueError('Please check the event links.')
+                        item['links'] = [{'name':required(entry.get('name',''),160),'url':required(link(entry.get('url','')),2000)} for entry in links]
                         item['photos'] = item.get('photos', [])
                         statuses = ['planned','upcoming','ongoing','past']
                     else:
