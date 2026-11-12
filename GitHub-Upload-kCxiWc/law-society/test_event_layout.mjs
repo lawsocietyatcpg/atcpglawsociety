@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {renderEventLayout} from './dist/event-layout.js';
+const settings={location:'ATC Penang',email:'society@example.com'};
+const event={id:'trip',title:'Parliament trip',status:'past',category:'Education trip',date:'29–31 October 2026',description:'**Overview**\n\n### Day 1\n'+('A visit with students. '.repeat(50))+'\n\n- Parent\n  - Child',instagram:'https://www.instagram.com/p/example/',links:[{name:'LinkedIn',url:'https://www.linkedin.com/'}],documents:[{name:'Trip report.pdf',path:'https://example.com/report.pdf'}],photos:['https://example.com/photo.jpg'],photo_captions:{'https://example.com/photo.jpg':'Group photograph'}};
+const html=renderEventLayout(event,settings);
+for(const text of ['unified-event','moot-header','moot-facts','moot-overview','moot-downloads','moot-photo-grid','View PDF','View Instagram post','LinkedIn','Group photograph','event-recap-section','<h3>Day 1</h3>','<ul><li>Parent<ul><li>Child</li></ul></li></ul>'])assert.ok(html.includes(text),text);
+assert.equal(html.split('A visit with students.').length-1,50); // No recap content lost or duplicated.
+assert.match(html,/data-event="trip" data-index="0"/);
+assert.ok(!html.includes('Register for this event'));
+const moot=renderEventLayout({...event,id:'1',title:'Annual Internal Moot Competition',status:'ongoing'},settings,{competition:{registration:'https://example.com/register',drive:'https://example.com/drive',schedule:'25 November\n4 December',participation:'Teams of 2–4'}});
+for(const text of ['moot-overview','moot-photo-grid','Schedule & participation','25 November','4 December','Teams of 2–4','Open Drive','Register your team'])assert.ok(moot.includes(text),text);
+assert.ok(!moot.includes('Photo to come'));
+const empty=renderEventLayout({id:'new',title:'New event',status:'upcoming',description:'Info'},settings);
+assert.match(empty,/No documents published yet/);assert.match(empty,/No photographs published yet/);
+const local=renderEventLayout({...event,documents:[{name:'Local PDF',path:'/uploads/'+'a'.repeat(32)+'.pdf'}]},settings);
+assert.match(local,/href="\/uploads\/a{32}\.pdf"/);
+const programme=renderEventLayout(event,settings,{programme:'<p>Current topic</p>'});assert.match(programme,/Topics & discussions/);
+const unsafe=renderEventLayout({...event,title:'<script>alert(1)</script>',documents:[{name:'<img>',path:'javascript:alert(1)'}]},settings);
+assert.ok(!unsafe.includes('<script>'));assert.ok(!unsafe.includes('href="javascript:'));
+console.log('PASS: shared event/competition/programme layout, complete recaps, PDFs, links, actual gallery captions, safe rendering and empty states.');

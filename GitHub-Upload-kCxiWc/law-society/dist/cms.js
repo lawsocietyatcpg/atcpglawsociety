@@ -1,6 +1,5 @@
-import {renderEventLinks} from './event-links.js';
+import {renderEventLayout} from './event-layout.js';
 import {createCaptionAutosave} from './caption-autosave.js';
-import {renderEventDescription} from './event-content.js';
 import {mountLogo} from './logo3d.js';
 
 export function createCMS(ctx){
@@ -91,50 +90,20 @@ export function createCMS(ctx){
     const drive=safeLink(s.moot_drive??mootDrive);
     const schedule=s.moot_schedule??defaultMootSchedule;
     const participation=s.moot_participation??defaultMootParticipation;
-    const documents=event?.documents||[];
-    const problem=documents.find(d=>/moot\s*(problem|question)/i.test(d.name)||/^ATC INTERNAL MOOT COMPETITION 2026(?:\.pdf)?$/i.test(d.name.trim()));
-    const otherDocuments=documents.filter(d=>!problem||d.path!==problem.path);
-    main.innerHTML=`<div class="event-preview moot-preview">
-      <div class="wrap moot-topline"><a href="#/events">Back to events</a><span class="preview-label">Competition information</span></div>
-      <section class="moot-header"><div class="wrap">
-        <div class="eyebrow">ATC Penang · Advocacy</div>
-        <h1>${esc(event?.title||'Annual Internal Moot Competition')}</h1>
-        <p class="moot-lead">Research the law. Build your argument. Find your voice.</p>
-        <dl class="moot-facts"><div><dt>When</dt><dd>See schedule below</dd></div><div><dt>Where</dt><dd>ATC Penang · Moot Court</dd></div><div><dt>Registration</dt><dd>${registration?`<a href="${esc(registration)}" target="_blank" rel="noopener noreferrer">Register your team</a>`:'Link to follow'}</dd></div></dl>
-      </div></section>
-      <div class="wrap moot-body">
-        <p class="moot-disclaimer">Competition dates and participation details may be updated by the society. Please check this page for the latest schedule.</p>
-        <div class="moot-overview">
-          <section class="moot-about"><div class="eyebrow"><span class="section-no">01</span> The competition</div><h2>Put theory<br>into practice.</h2><div class="event-copy moot-description">${renderEventDescription(event?.description||'Develop legal research and oral advocacy through our annual internal moot competition.')}</div>${registration?`<a class="btn moot-register" href="${esc(registration)}" target="_blank" rel="noopener noreferrer">Register your team</a>`:''}${safeLink(event?.instagram)?`<a class="btn outline" href="${esc(safeLink(event.instagram))}" target="_blank" rel="noopener noreferrer">View Instagram post</a>`:''}<div class="event-actions">${renderEventLinks(event,{instagram:false})}</div></section>
-          <section class="moot-downloads" aria-labelledby="moot-download-title"><div class="eyebrow"><span class="section-no">02</span> Resources</div><h2 id="moot-download-title">Competition documents</h2>
-            <div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>Moot Question</h3><p>${problem?'Official competition question.':'No release yet.'}</p></div>${problem?`<a href="${esc(problem.path)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">View PDF</a>`:'<span class="file-pending">Not released</span>'}</div>
-            ${otherDocuments.map(d=>`<div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>${esc(d.name.replace(/\.pdf$/i,''))}</h3><p>Competition document.</p></div><a href="${esc(d.path)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">View PDF</a></div>`).join('')}
-            <div class="moot-file"><span class="file-tag drive-tag" aria-hidden="true">DRIVE</span><div><h3>Competition updates & clarifications</h3><p>Find the moot question, clarifications and updated files in the society’s Google Drive.</p></div>${drive?`<a href="${esc(drive)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">Open Drive</a>`:'<span class="file-pending">Link to follow</span>'}</div>
-          </section>
-        </div>
-        <section class="moot-schedule" aria-labelledby="moot-schedule-title"><div class="eyebrow"><span class="section-no">03</span> On this website</div><h2 id="moot-schedule-title">Schedule & participation</h2><div class="moot-schedule-grid"><div><h3>Competition dates</h3><p>${br(schedule)||'Schedule to be confirmed.'}</p></div><div><h3>Who can take part</h3><p>${br(participation)||'Participation details to follow.'}</p></div></div></section>
-        <section class="moot-photos" aria-labelledby="moot-photo-title"><div class="moot-photo-heading"><div><div class="eyebrow"><span class="section-no">04</span> Gallery</div><h2 id="moot-photo-title">From the competition</h2></div><p>Actual photos will follow the event.</p></div>
-          <div class="moot-photo-grid">${['Group photograph','Oral submissions','Closing moments'].map((name,i)=>`<figure><div class="moot-photo-slot" aria-label="Photo placeholder: ${name}"><svg viewBox="0 0 40 32" fill="none" aria-hidden="true"><rect x="1" y="1" width="38" height="30" rx="1" stroke="currentColor"/><circle cx="28" cy="10" r="3" stroke="currentColor"/><path d="M2 27 13 15l8 8 5-5 12 12" stroke="currentColor"/></svg><span>Photo to come</span></div><figcaption><span>0${i+1}</span>${name}</figcaption></figure>`).join('')}</div>
-        </section>
-        <div class="moot-end"><a href="#/events">All society events</a><a href="mailto:${esc(state().settings.email)}">Contact the society</a></div>
-      </div>
-    </div>`;
+    if(!event)return;
+    main.innerHTML=renderEventLayout(event,s,{competition:{registration,drive,schedule,participation}});
   }
   function decorateEvent(id){
-    const event=state().events.find(e=>e.id===id);if(!event||event.status==='planned')return;
-    if(id==='biweekly'){biweeklyLanding();return}
-    const documents=event.documents||[];
-    if(documents.length)main.querySelector('.event-copy')?.insertAdjacentHTML('beforebegin',`<section class="event-resources"><h3>Event documents</h3>${documents.map(d=>`<div class="resource-row"><span>${esc(d.name)}</span><a class="btn outline" href="${esc(d.path)}" target="_blank" rel="noopener noreferrer">View PDF</a></div>`).join('')}</section>`);
-    main.querySelector('.gallery')?.classList.add('event-gallery');
-    const gallery=main.querySelector('.gallery');
-    if(gallery)gallery.innerHTML=event.photos.map((path,i)=>`<figure><button class="photo-open" data-cms="view-photo" data-event="${event.id}" data-index="${i}"><img src="${esc(path)}" alt="${esc(event.photo_captions?.[path]||event.title+' — photograph '+(i+1))}" loading="lazy"></button>${event.photo_captions?.[path]?`<figcaption>${esc(event.photo_captions[path])}</figcaption>`:''}</figure>`).join('');
+    if(id==='biweekly')biweeklyLanding();
   }
   function biweeklyLanding(){
     const event=state().events.find(e=>e.id==='biweekly');
     const upcoming=state().topics.filter(topic=>topic.status!=='archived');
     const past=state().topics.filter(topic=>topic.status==='archived');
     const cards=items=>items.map((topic,index)=>`<a class="biweekly-topic" href="#/topic/${encodeURIComponent(topic.id)}"><span class="biweekly-number">${String(index+1).padStart(2,'0')}</span><div><span class="eyebrow">${topic.status==='open'?'Open for discussion':topic.status==='archived'?'Past topic':'Coming up'}</span><h3>${esc(topic.title)}</h3><p>${esc(topic.summary||'Topic details will be added by the society.')}</p><small>${topic.documents?.length?`${topic.documents.length} PDF${topic.documents.length===1?'':'s'} available · `:''}${topic.discussion?`Discussion ${friendlyDate(topic.discussion)}`:'Discussion date to follow'}</small></div><span class="biweekly-arrow" aria-hidden="true">View topic</span></a>`).join('');
-    main.innerHTML=`<div class="wrap page biweekly-page"><div class="breadcrumbs"><a href="#/events">Events</a> / Biweekly legal knowledge</div><span class="eyebrow">A continuing society programme</span><h1 class="page-title">${esc(event?.title||'Biweekly legal knowledge')}</h1><p class="topic-intro">${esc(event?.description||state().settings.dialogue_intro)}</p><div class="event-actions">${renderEventLinks(event)}</div><p class="small muted">Read the topic materials and discuss directly on this website. There is no separate online meeting.</p><section class="biweekly-group"><div class="biweekly-group-head"><h2>Current & upcoming</h2><span>${upcoming.length} topic${upcoming.length===1?'':'s'}</span></div>${cards(upcoming)||'<p class="muted">New topics will appear here.</p>'}</section><section class="biweekly-group"><div class="biweekly-group-head"><h2>Past topics</h2><span>${past.length} topic${past.length===1?'':'s'}</span></div>${cards(past)||'<p class="muted">Completed discussions will be kept here for reference.</p>'}</section></div>`;
+    if(!event)return;
+    const programme=`<p class="small muted">Read the topic materials and discuss directly on this website. There is no separate online meeting.</p><section class="biweekly-group"><div class="biweekly-group-head"><h2>Current & upcoming</h2><span>${upcoming.length} topic${upcoming.length===1?'':'s'}</span></div>${cards(upcoming)||'<p class="muted">New topics will appear here.</p>'}</section><section class="biweekly-group"><div class="biweekly-group-head"><h2>Past topics</h2><span>${past.length} topic${past.length===1?'':'s'}</span></div>${cards(past)||'<p class="muted">Completed discussions will be kept here for reference.</p>'}</section>`;
+    main.innerHTML=renderEventLayout(event,state().settings,{programme});
   }
   function decorateTopic(id){
     const topic=state().topics.find(t=>t.id===id);if(!topic)return;
