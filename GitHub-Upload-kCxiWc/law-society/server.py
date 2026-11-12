@@ -335,6 +335,7 @@ class Handler(SimpleHTTPRequestHandler):
                         for key in ['date', 'category', 'description']:
                             item[key] = clean(data.get(key,''))
                         item['registration'] = link(data.get('registration',''))
+                        item['instagram'] = link(data.get('instagram',''))
                         item['photos'] = item.get('photos', [])
                         statuses = ['planned','upcoming','ongoing','past']
                     else:

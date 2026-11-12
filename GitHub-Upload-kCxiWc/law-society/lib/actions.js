@@ -93,6 +93,7 @@ export function applyAction(state, action, data, user, uploadedUrl) {
     if (event) {
       for (const key of ['date', 'category', 'description']) row[key] = asText(data[key] || '');
       row.registration = link(data.registration || '');
+      row.instagram = link(data.instagram || '');
       row.photos ||= [];
       row.documents ||= [];
     } else {
