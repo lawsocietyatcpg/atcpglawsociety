@@ -1,3 +1,4 @@
+import {renderEventDescription} from './event-content.js';
 import {mountLogo} from './logo3d.js';
 
 export function createCMS(ctx){
@@ -93,7 +94,7 @@ export function createCMS(ctx){
       <div class="wrap moot-body">
         <p class="moot-disclaimer">Competition dates and participation details may be updated by the society. Please check this page for the latest schedule.</p>
         <div class="moot-overview">
-          <section class="moot-about"><div class="eyebrow"><span class="section-no">01</span> The competition</div><h2>Put theory<br>into practice.</h2><p>${esc(event?.description||'Develop legal research and oral advocacy through our annual internal moot competition.')}</p>${registration?`<a class="btn moot-register" href="${esc(registration)}" target="_blank" rel="noopener noreferrer">Register your team</a>`:''}${safeLink(event?.instagram)?`<a class="btn outline" href="${esc(safeLink(event.instagram))}" target="_blank" rel="noopener noreferrer">View Instagram post</a>`:''}</section>
+          <section class="moot-about"><div class="eyebrow"><span class="section-no">01</span> The competition</div><h2>Put theory<br>into practice.</h2><div class="event-copy moot-description">${renderEventDescription(event?.description||'Develop legal research and oral advocacy through our annual internal moot competition.')}</div>${registration?`<a class="btn moot-register" href="${esc(registration)}" target="_blank" rel="noopener noreferrer">Register your team</a>`:''}${safeLink(event?.instagram)?`<a class="btn outline" href="${esc(safeLink(event.instagram))}" target="_blank" rel="noopener noreferrer">View Instagram post</a>`:''}</section>
           <section class="moot-downloads" aria-labelledby="moot-download-title"><div class="eyebrow"><span class="section-no">02</span> Resources</div><h2 id="moot-download-title">Competition documents</h2>
             <div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>Moot Question</h3><p>${problem?'Official competition question.':'No release yet.'}</p></div>${problem?`<a href="${esc(problem.path)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">View PDF</a>`:'<span class="file-pending">Not released</span>'}</div>
             ${otherDocuments.map(d=>`<div class="moot-file"><span class="file-tag" aria-hidden="true">PDF</span><div><h3>${esc(d.name.replace(/\.pdf$/i,''))}</h3><p>Competition document.</p></div><a href="${esc(d.path)}" target="_blank" rel="noopener noreferrer" class="moot-download-link">View PDF</a></div>`).join('')}
@@ -175,7 +176,7 @@ export function createCMS(ctx){
       const form=main.querySelector('[data-cms-form="settings"] .form-grid');
       form.insertAdjacentHTML('beforeend',`<div class="full"><h3>Brand colours</h3><p class="small muted">Coordinate these with the Media team. Use dark text on a light background so the website stays readable.</p><div class="form-grid">${[['color_primary','Primary / buttons'],['color_background','Page background'],['color_accent','Gold / accent'],['color_text','Text colour']].map(([k,l])=>input(k,l,state().settings[k],'color')).join('')}</div></div>`);
     }
-    if(section==='events')main.querySelector('.cms-content').insertAdjacentHTML('afterbegin',`<section class="panel moot-admin-control"><div class="moot-admin-head"><div><div class="eyebrow">Annual Internal Moot Competition</div><h3>Page access</h3><p class="small muted">${s.moot_public===true?'Public now: visitors can open this page.':'Private now: visitors see a grey, non-clickable event. Only admins can preview it.'}</p></div><span class="badge">${s.moot_public===true?'PUBLIC':'ADMIN ONLY'}</span></div><div class="two-buttons"><button class="btn ${s.moot_public===true?'outline':''}" data-cms="toggle-moot-public">${s.moot_public===true?'Make grey / hide from visitors':'Open to public / make clickable'}</button><a class="btn outline" href="#/event-preview">Preview as admin</a><button class="btn outline" data-action="edit-event" data-id="1">Upload / manage PDFs</button></div><p class="small muted">Prepare links and PDFs first. The button above changes only page access; it does not change the event date or files.</p></section><section class="panel"><h3>Competition links & details</h3><p class="small muted">Put the Google Drive folder link beside the registration form link. Save these details before opening the page to visitors.</p>${settingsForm(`${input('moot_registration','Registration form link (responder link)',s.moot_registration??mootRegistration,'url')}${input('moot_drive','Google Drive link (questions, updates & clarifications)',s.moot_drive??mootDrive,'url')}<div class="full">${input('moot_schedule','Competition dates / schedule',s.moot_schedule??defaultMootSchedule,'textarea')}</div><div class="full">${input('moot_participation','Participation details',s.moot_participation??defaultMootParticipation,'textarea')}</div>`)}</section>`);
+    if(section==='events')main.querySelector('.cms-content').insertAdjacentHTML('afterbegin',`<section class="panel"><h3>Competition links & details</h3><p class="small muted">Put the Google Drive folder link beside the registration form link. Save these details before opening the page to visitors.</p>${settingsForm(`${input('moot_registration','Registration form link (responder link)',s.moot_registration??mootRegistration,'url')}${input('moot_drive','Google Drive link (questions, updates & clarifications)',s.moot_drive??mootDrive,'url')}<div class="full">${input('moot_schedule','Competition dates / schedule',s.moot_schedule??defaultMootSchedule,'textarea')}</div><div class="full">${input('moot_participation','Participation details',s.moot_participation??defaultMootParticipation,'textarea')}</div>`)}</section>`);
   }
   function decorateDialog(){
     const form=dialog.querySelector('[data-form="save-event"],[data-form="save-topic"]');if(!form)return;
@@ -203,14 +204,6 @@ export function createCMS(ctx){
       if(action==='admin-login')return openLogin();
       if(action==='bootstrap-google')return ctx.getMemberAuth().signIn();
       if(action==='sync-members'){const result=await api('sync-members',{});await refresh();toast(result.busy?'A sync is already running. Please try again shortly.':`${result.synced} member record(s) synced.`);return}
-      if(action==='toggle-moot-public'){
-        if(dirty)return warnBefore(()=>{dirty=false;b.click()});
-        const next=state().settings.moot_public!==true;
-        if(next&&!window.confirm('Open the Annual Moot Competition page to everyone? Visitors will be able to see its links and uploaded PDFs.'))return;
-        b.disabled=true;
-        try{await api('save-settings',{settings:{moot_public:next}});await refresh();toast(next?'Annual Moot is public and clickable.':'Annual Moot is grey and private again.')}finally{b.disabled=false}
-        return;
-      }
       if(action==='view-photo'){
         const event=state().events.find(e=>e.id===b.dataset.event),index=Number(b.dataset.index),path=event?.photos[index];if(!path)return;
         return showDialog(`<div class="photo-viewer"><img src="${esc(path)}" alt="${esc(event.photo_captions?.[path]||event.title)}"><p>${esc(event.photo_captions?.[path]||event.title)}</p><div class="two-buttons">${index>0?`<button class="btn outline" data-cms="view-photo" data-event="${event.id}" data-index="${index-1}">Previous</button>`:''}${index<event.photos.length-1?`<button class="btn outline" data-cms="view-photo" data-event="${event.id}" data-index="${index+1}">Next</button>`:''}</div></div>`);
