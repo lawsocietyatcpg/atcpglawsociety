@@ -229,3 +229,5 @@ footer { background:transparent; color:var(--muted); }
 .event-external-link{max-width:100%;overflow-wrap:anywhere;text-align:center;}
 .photo-manager [data-caption-status]{display:block;margin:6px 0;}
 .photo-manager [data-caption-retry][hidden]{display:none;}
+
+.event-format-toolbar{flex-wrap:wrap;}
