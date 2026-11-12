@@ -231,3 +231,8 @@ footer { background:transparent; color:var(--muted); }
 .photo-manager [data-caption-retry][hidden]{display:none;}
 
 .event-format-toolbar{flex-wrap:wrap;}
+.event-copy ul,.event-copy ol{padding-inline-start:1.7em;margin:0 0 1.3em;text-align:left;}
+.event-copy li{padding-inline-start:.25em;margin:.35em 0;white-space:normal;}
+.event-copy li>ul,.event-copy li>ol{margin:.3em 0 .5em;}
+.event-copy ul{list-style-type:disc;}.event-copy ul ul{list-style-type:circle;}.event-copy ul ul ul{list-style-type:square;}
+.event-copy ol{list-style-type:decimal;}.event-copy li>ol{list-style-type:lower-alpha;}.event-copy li li>ol{list-style-type:lower-roman;}
