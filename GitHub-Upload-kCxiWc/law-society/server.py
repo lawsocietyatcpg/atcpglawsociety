@@ -332,8 +332,15 @@ class Handler(SimpleHTTPRequestHandler):
                     item = find(collection, ident) if ident else {'id': secrets.token_hex(8)}
                     item['title'] = required(data.get('title',''), 160)
                     if is_event:
-                        for key in ['date', 'category', 'description']:
+                        legacy_past=item.get('status',data.get('status'))=='past'
+                        previous_intro=item.get('introduction','' if legacy_past else data.get('description',item.get('description','')))
+                        previous_recap=item.get('recap',data.get('description',item.get('description','')) if legacy_past else '')
+                        for key in ['date', 'category']:
                             item[key] = clean(data.get(key,''))
+                        item['description']=clean(data.get('description',item.get('description','')),20000)
+                        item['introduction']=clean(data.get('introduction',previous_intro))
+                        item['recap']=clean(data.get('recap',previous_recap),20000)
+                        item['venue']=clean(data.get('venue',item.get('venue','ATC Penang · Moot Court' if ident=='1' else '')),500)
                         item['registration'] = link(data.get('registration',''))
                         item['instagram'] = link(data.get('instagram',''))
                         links = data.get('links',item.get('links',[]))

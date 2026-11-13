@@ -25,6 +25,7 @@ DEFAULTS = {
     'events_title': 'Events',
     'events_intro': 'Mooting, visits and conversations.',
     'events_note': 'Dates subject to confirmation.',
+    'linkedin': '', 'linkedin_label': 'LinkedIn',
     'contact_title': 'Contact', 'instagram_label': '@lawsocietyatcpg_',
     'dialogue_title': 'Legal discussion',
     'dialogue_intro': 'Read the explainer. Join the conversation.',
@@ -108,7 +109,7 @@ def validate_settings(settings):
         raise ValueError('Enter a valid email address.')
     if 'instagram' in settings and settings['instagram'] and not settings['instagram'].startswith('https://'):
         raise ValueError('The Instagram link must use https://.')
-    for key in ['moot_registration', 'moot_drive']:
+    for key in ['moot_registration', 'moot_drive', 'linkedin']:
         if key in settings and settings[key] and not settings[key].startswith('https://'):
             raise ValueError('Links must start with https://.')
     if 'logo' in settings and not valid_asset(settings['logo']):
@@ -144,6 +145,7 @@ def validate_backup(state):
             for key in ['instagram','meet','registration']:
                 if key in row and row[key] and not row[key].startswith('https://'): raise ValueError('Unsafe link in backup.')
             if collection=='events':
+                if not all(isinstance(row.get(key,''),str) and len(row.get(key,''))<=limit for key,limit in [('introduction',5000),('recap',20000),('venue',500)]): raise ValueError('Invalid event text in backup.')
                 links=row.get('links',[])
                 if not isinstance(links,list) or len(links)>50 or not all(isinstance(entry,dict) and isinstance(entry.get('name'),str) and 0<len(entry['name'].strip())<=160 and isinstance(entry.get('url'),str) and entry['url'].startswith('https://') and len(entry['url'])<=2000 for entry in links): raise ValueError('Invalid event links in backup.')
                 if row['status'] not in ['planned','upcoming','ongoing','past'] or not all(valid_asset(p) for p in row['photos']): raise ValueError('Invalid event in backup.')

@@ -26,6 +26,7 @@ export default async function handler(req, res) {
       state.author_identities = Object.fromEntries(profiles.data.map(profile => [profile.user_id, profile]));
     } else {
       delete state.reports;
+      for (const event of state.events) if (event.status !== 'past') delete event.recap;
       for (const comment of state.comments) delete comment.user;
       if (state.settings.moot_public !== true) {
         for (const key of ['moot_registration', 'moot_drive', 'moot_schedule', 'moot_participation']) delete state.settings[key];

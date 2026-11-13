@@ -1,3 +1,4 @@
+import {eventContent} from '../dist/event-record.js';
 import { randomBytes } from 'node:crypto';
 import seed from '../seed.json' with { type: 'json' };
 
@@ -66,6 +67,7 @@ function validateSettings(settings) {
   }
   if (settings.email && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(settings.email)) throw new Error('Enter a valid email address.');
   if (settings.instagram) link(settings.instagram);
+  if (settings.linkedin) link(settings.linkedin);
   if (settings.moot_registration) link(settings.moot_registration);
   if (settings.moot_drive) link(settings.moot_drive);
   if (settings.logo && settings.logo !== '/assets/logo.png' && !/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/society-public\/[a-f0-9]{32}\.(png|jpg|webp)$/.test(settings.logo)) throw new Error('Choose a logo uploaded through the media library.');
@@ -98,7 +100,12 @@ export function applyAction(state, action, data, user, uploadedUrl) {
     const row = ident ? item(state, collection, ident) : { id: id() };
     row.title = required(data.title, 160);
     if (event) {
-      for (const key of ['date', 'category', 'description']) row[key] = asText(data[key] || '');
+      const previous=eventContent({...row,description:data.description??row.description,status:row.status??data.status});
+      for (const key of ['date', 'category']) row[key] = asText(data[key] || '');
+      row.description = asText(data.description ?? row.description ?? '', 20000);
+      row.introduction = asText(data.introduction ?? previous.introduction);
+      row.recap = asText(data.recap ?? previous.recap, 20000);
+      row.venue = asText(data.venue ?? previous.venue, 500);
       row.registration = link(data.registration || '');
       row.instagram = link(data.instagram || '');
       row.links = validateEventLinks(data.links ?? row.links ?? []);

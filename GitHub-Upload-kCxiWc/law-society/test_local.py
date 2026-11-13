@@ -62,6 +62,11 @@ def run():
             state,_=request();event=state['events'][-1];assert event['title']=='QA Event'
             assert event['instagram']=='https://www.instagram.com/p/qa-event/'
             assert len(event['links'])==2
+            assert event['recap']=='QA recap' and event['introduction']==''
+            event.update({'introduction':'Short event introduction','recap':'### Day 1\nFull event recap','venue':'ATC Penang'})
+            request('save-event',event,admin)
+            request('save-settings',{'settings':{'linkedin':'https://www.linkedin.com/company/example/','linkedin_label':'LinkedIn'}},admin)
+            request('save-settings',{'settings':{'linkedin':'javascript:alert(1)'}},admin,400)
             request('save-event',{**event,'links':[{'name':'Unsafe','url':'javascript:alert(1)'}]},admin,400)
             request('save-event',{**event,'links':[{'name':'','url':'https://example.com'}]},admin,400)
             request('save-event',{**event,'links':[]},admin)
@@ -91,6 +96,10 @@ def run():
             state,_=request();assert state['events'][-1]['photo_captions'][photo]=='Test photograph caption'
             assert state['events'][-1]['instagram']==event['instagram']
             assert state['events'][-1]['links']==event['links']
+            assert state['events'][-1]['recap']==event['recap']
+            assert state['events'][-1]['introduction']==event['introduction']
+            assert state['events'][-1]['venue']==event['venue']
+            assert state['settings']['linkedin']=='https://www.linkedin.com/company/example/'
             request('remove-photo',{'id':event['id'],'path':photo},admin)
             state,_=request();assert not state['events'][-1]['photos']
             bad=io.BytesIO()
